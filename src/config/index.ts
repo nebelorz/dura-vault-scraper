@@ -1,5 +1,4 @@
 import * as dotenv from 'dotenv';
-import type { HighscoreSection } from '../types';
 
 dotenv.config();
 
@@ -17,7 +16,7 @@ export const config = {
       'axe',
       'fist',
       'fishing',
-    ] as HighscoreSection[],
+    ] as const,
   },
   database: {
     host: process.env.PGHOST,

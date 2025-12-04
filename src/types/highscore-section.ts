@@ -1,7 +1,7 @@
 export type HighscoreSection =
   | 'experience'
   | 'magic'
-  | 'shielding'
+  | 'shield'
   | 'distance'
   | 'club'
   | 'sword'
