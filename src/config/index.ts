@@ -1,11 +1,23 @@
 import * as dotenv from 'dotenv';
+import type { HighscoreSection } from '../types';
 
 dotenv.config();
 
 export const config = {
   scraper: {
     baseUrl: process.env.SCRAPER_BASE_URL,
-    defaultPagesNumber: 1,
+    scrapNumberOfPages: 1,
+    sectionsToScrape: [
+      'experience',
+      'magic',
+      'shielding',
+      'distance',
+      'club',
+      'sword',
+      'axe',
+      'fist',
+      'fishing',
+    ] as HighscoreSection[],
   },
   database: {
     host: process.env.PGHOST,

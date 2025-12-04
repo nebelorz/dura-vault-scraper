@@ -14,6 +14,13 @@ function formatMessage(level: LogLevel, message: string): string {
 }
 
 /**
+ * Logs a section message to the console.
+ */
+export function section(message: string, ...args: any[]): void {
+  console.log(`\n${formatMessage(LogLevel.INFO, '• ' + message)}`, ...args);
+}
+
+/**
  * Logs an info message to the console.
  */
 export function info(message: string, ...args: any[]): void {
@@ -47,6 +54,7 @@ export function debug(message: string, ...args: any[]): void {
  * Default logger export with all methods.
  */
 export const logger = {
+  section,
   info,
   warn,
   error,

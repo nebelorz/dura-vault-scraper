@@ -6,12 +6,12 @@ import type { HighscoreEntry, HighscoreSection } from '../types';
 
 export async function scrapeHighscore(
   highscoresSection: HighscoreSection,
-  pagesToScrap = config.scraper.defaultPagesNumber,
+  pagesToScrap = config.scraper.scrapNumberOfPages,
 ): Promise<HighscoreEntry[]> {
   const allEntries: HighscoreEntry[] = [];
   const baseUrl = `${config.scraper.baseUrl}/${highscoresSection}/`;
 
-  logger.info(`Scraping ${pagesToScrap} pages from ${highscoresSection} highscores...`);
+  logger.section(`Scraping '${highscoresSection}' highscores (${pagesToScrap} pages)`);
 
   for (let page = 0; page < pagesToScrap; page++) {
     const url = `${baseUrl}${page}`;
@@ -24,6 +24,8 @@ export async function scrapeHighscore(
       logger.error(`Error on page ${page}:`, error);
     }
   }
+
+  logger.info(`Scraped records: ${allEntries.length}`);
 
   return allEntries;
 }
