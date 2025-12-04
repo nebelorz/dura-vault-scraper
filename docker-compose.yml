@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: dura-vault-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${PGDATABASE}
+      POSTGRES_USER: ${PGUSER}
+      POSTGRES_PASSWORD: ${PGPASSWORD}
+    ports:
+      - '${PGPORT:-5432}:5432'
+    volumes:
+      - dura-vault-postgres-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${PGUSER}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  scraper:
+    build: .
+    image: dura-vault-scraper
+    container_name: dura-vault-scraper
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGPORT: ${PGPORT}
+      PGDATABASE: ${PGDATABASE}
+      PGUSER: ${PGUSER}
+      PGPASSWORD: ${PGPASSWORD}
+      SCRAPER_BASE_URL: ${SCRAPER_BASE_URL}
+    tty: true
+
+volumes:
+  dura-vault-postgres-db:
