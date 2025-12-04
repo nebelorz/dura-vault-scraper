@@ -8,4 +8,4 @@ RUN npm run build
 # Remove devDependencies to shrink image size
 RUN npm prune --production
 
-CMD node dist/db/init-db.js && node dist/main.js
+CMD node dist/db/init-db.js && node dist/db/init-db.js && node dist/main.js
