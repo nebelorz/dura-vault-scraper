@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
+    "eslint": "eslint src --ext .ts --max-warnings 0",
     "start:db": "ts-node src/db/init-db.ts",
     "start:dev": "ts-node src/main.ts",
     "start:production": "npm run build && node dist/main.js"

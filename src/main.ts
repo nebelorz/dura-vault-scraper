@@ -4,7 +4,7 @@ import { closePool, insertHighscoreSnapshots, checkDatabaseConnection } from './
 import { config } from './config';
 
 function logScrapingSummary(totalRecords: number, errors: string[]) {
-  logger.section(`Scraping completed`);
+  logger.section('Scraping completed');
   logger.info(`Total records: ${totalRecords}`);
   logger.info(
     `Sections scraped: ${config.scraper.sectionsToScrape.length - errors.length}/${config.scraper.sectionsToScrape.length}`,
