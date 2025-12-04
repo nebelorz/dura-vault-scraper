@@ -1,6 +1,6 @@
 import { logger } from './utils/logger';
 import { scrapeHighscore } from './core';
-import { closePool, insertHighscoreSnapshots } from './db';
+import { closePool, insertHighscoreSnapshots, checkDatabaseConnection } from './db';
 import { config } from './config';
 
 function logScrapingSummary(totalRecords: number, errors: string[]) {
@@ -15,6 +15,10 @@ function logScrapingSummary(totalRecords: number, errors: string[]) {
 }
 
 async function main() {
+  // Check DB connection
+  const dbConnected = await checkDatabaseConnection();
+  if (!dbConnected) process.exit(1);
+
   let totalRecords = 0;
   const errors: string[] = [];
 
@@ -29,7 +33,7 @@ async function main() {
 
       totalRecords += results.length;
     } catch (error) {
-      logger.error(`✗ Failed to scrape ${section}:`, error);
+      logger.error(`Failed to scrape ${section}:`, error);
       errors.push(section);
     }
   }

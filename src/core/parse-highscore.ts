@@ -1,90 +1,123 @@
 import * as cheerio from 'cheerio';
 import type { HighscoreEntry } from '../types';
+import { logger } from '../utils/logger';
+
+interface ColumnIndices {
+  rank: number;
+  name: number;
+  level: number;
+  points: number | null;
+}
 
 /**
  * Finds the highscore table in the HTML based on header column names.
  */
 function findHighscoreTable($: cheerio.CheerioAPI): cheerio.Cheerio<any> {
-  return $('table')
-    .filter((_, el) => {
-      const header = $(el).find('tr').first().text();
-      return header.includes('Rank') && header.includes('Name') && header.includes('Level');
-    })
-    .first();
+  let selectedTable = $('table').first();
+
+  $('table').each((_, table) => {
+    const firstRow = $(table).find('tr').first();
+    const cells = firstRow.find('td');
+
+    if (cells.length >= 3 && cells.length <= 5) {
+      const texts = cells.map((_i: number, el: any) => $(el).text().trim().toLowerCase()).get();
+      const hasRank = texts.includes('rank');
+      const hasName = texts.includes('name');
+      const hasLevel = texts.includes('level');
+
+      if (hasRank && hasName && hasLevel) {
+        selectedTable = $(table);
+        return false;
+      }
+    }
+  });
+
+  return selectedTable;
 }
 
 /**
- * Checks if the table has a Points/Experience column.
+ * Detects column indices by finding the header row and mapping column names to indices.
+ * Returns null if required columns (Rank, Name, Level) are not found.
  */
-function hasPointsColumn(table: cheerio.Cheerio<any>): boolean {
-  const headerCells = table.find('tr').first().find('td');
-  return headerCells.length > 3 && /Points/i.test(headerCells.eq(3).text());
-}
+function detectColumnIndices(
+  table: cheerio.Cheerio<any>,
+  $: cheerio.CheerioAPI,
+): ColumnIndices | null {
+  let columnIndices: ColumnIndices | null = null;
 
-/**
- * Parses the rank from a table cell. Returns null if not a valid rank.
- */
-function parseRank(cell: cheerio.Cheerio<any>): number | null {
-  const rankText = cell.text().replace('.', '').trim();
-  const rank = parseInt(rankText, 10);
-  return isNaN(rank) ? null : rank;
-}
+  table.find('tr').each((_, tr) => {
+    const tds = $(tr).find('td');
+    if (tds.length < 3) return;
 
-/**
- * Parses the character name and vocation from a table cell.
- */
-function parseNameAndVocation(cell: cheerio.Cheerio<any>): { name: string; vocation: string } {
-  const name = cell.find('a span').first().text().trim();
-  const vocation = cell.find('small').first().text().trim();
-  return { name, vocation };
-}
+    const texts = tds.map((_i: number, el: any) => $(el).text().trim().toLowerCase()).get();
 
-/**
- * Parses the level from a table cell.
- */
-function parseLevel(cell: cheerio.Cheerio<any>): number {
-  return parseInt(cell.text().replace(/\D/g, ''), 10);
-}
+    // Check if this row contains the header keywords (case-insensitive)
+    const rankIdx = texts.findIndex((t) => t === 'rank');
+    const nameIdx = texts.findIndex((t) => t === 'name');
+    const levelIdx = texts.findIndex((t) => t === 'level');
+    const pointsIdx = texts.findIndex((t) => t === 'points');
 
-/**
- * Parses the points/experience from a table cell if available.
- */
-function parsePoints(cell: cheerio.Cheerio<any>): number | undefined {
-  const points = parseInt(cell.text().replace(/[^\d]/g, ''), 10);
-  return isNaN(points) ? undefined : points;
+    if (rankIdx !== -1 && nameIdx !== -1 && levelIdx !== -1) {
+      columnIndices = {
+        rank: rankIdx,
+        name: nameIdx,
+        level: levelIdx,
+        points: pointsIdx !== -1 ? pointsIdx : null, // Points column optional (only displayed on experience highscore)
+      };
+      return false;
+    }
+  });
+
+  return columnIndices;
 }
 
 /**
  * Parses the highscore HTML and extracts an array of HighscoreEntry objects.
- * Supports tables with or without a Points/Experience column.
+ * Supports tables with or without a Points column.
  */
-export function parseHighscore(html: string): HighscoreEntry[] {
+export function parseHighscore(html: string, section?: string): HighscoreEntry[] {
   const $ = cheerio.load(html);
   const entries: HighscoreEntry[] = [];
 
   const table = findHighscoreTable($);
-  const hasPoints = hasPointsColumn(table);
+  const columnIndices = detectColumnIndices(table, $);
+
+  if (!columnIndices) {
+    logger.error(`Failed to detect column indices for section '${section}' to parse`);
+    return entries;
+  }
 
   table.find('tr').each((_, row) => {
     const cells = $(row).find('td');
-    if (cells.length < 3) return; // Skip header or incomplete rows
+    if (cells.length < 3) return;
 
-    const rank = parseRank(cells.eq(0));
-    if (rank === null) return; // Skip non-data rows
+    // Parse rank
+    const rankText = cells.eq(columnIndices.rank).text().replace('.', '').trim();
+    const rank = parseInt(rankText, 10);
+    if (isNaN(rank) || rank <= 0) return;
 
-    const { name, vocation } = parseNameAndVocation(cells.eq(1));
-    const level = parseLevel(cells.eq(2));
+    // Parse name and vocation
+    const nameCell = cells.eq(columnIndices.name);
+    const name = nameCell.find('a span').first().text().trim();
+    const vocation = nameCell.find('small').first().text().trim();
+    if (!name) return;
 
-    const entry: HighscoreEntry = { rank, name, vocation, level };
+    // Parse level
+    const levelText = cells.eq(columnIndices.level).text().replace(/\D/g, '');
+    const level = parseInt(levelText, 10);
+    if (isNaN(level) || level <= 0) return;
 
-    if (hasPoints && cells.length > 3) {
-      const experience = parsePoints(cells.eq(3));
-      if (experience !== undefined) {
-        entry.experience = experience;
+    // Parse points (null if column doesnt exist)
+    let points: number | null = null;
+    if (columnIndices.points !== null && cells.length > columnIndices.points) {
+      const pointsText = cells.eq(columnIndices.points).text().replace(/[^\d]/g, '');
+      const parsedPoints = parseInt(pointsText, 10);
+      if (!isNaN(parsedPoints)) {
+        points = parsedPoints;
       }
     }
 
-    entries.push(entry);
+    entries.push({ rank, name, vocation, level, points });
   });
 
   return entries;

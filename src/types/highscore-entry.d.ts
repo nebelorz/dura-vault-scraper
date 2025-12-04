@@ -3,5 +3,5 @@ export interface HighscoreEntry {
   name: string;
   vocation: string;
   level: number;
-  experience?: number;
+  points: number | null;
 }

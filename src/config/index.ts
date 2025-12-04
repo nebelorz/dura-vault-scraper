@@ -10,7 +10,7 @@ export const config = {
     sectionsToScrape: [
       'experience',
       'magic',
-      'shielding',
+      'shield',
       'distance',
       'club',
       'sword',

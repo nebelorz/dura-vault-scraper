@@ -15,9 +15,10 @@ export async function scrapeHighscore(
 
   for (let page = 0; page < pagesToScrap; page++) {
     const url = `${baseUrl}${page}`;
+    logger.debug(`Base URL: ${url}`);
     try {
       const html = await fetchHTML(url);
-      const entries = parseHighscore(html);
+      const entries = parseHighscore(html, highscoresSection);
       allEntries.push(...entries);
       logger.info(`Page ${page}/${pagesToScrap - 1} OK: ${entries.length} records`);
     } catch (error) {

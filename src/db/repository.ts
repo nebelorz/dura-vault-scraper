@@ -5,6 +5,19 @@ import type { HighscoreEntry, HighscoreSection } from '../types';
 
 const pool = new Pool(config.database);
 
+export async function checkDatabaseConnection(): Promise<boolean> {
+  try {
+    const client = await pool.connect();
+    await client.query('SELECT 1');
+    client.release();
+    logger.info('Database connection successful');
+    return true;
+  } catch (error) {
+    logger.error('Database connection failed:', error);
+    return false;
+  }
+}
+
 export async function insertHighscoreSnapshots(
   entries: HighscoreEntry[],
   section: HighscoreSection,
@@ -31,7 +44,7 @@ export async function insertHighscoreSnapshots(
         entry.name,
         entry.vocation,
         entry.level,
-        entry.experience || null,
+        entry.points || null,
       ];
 
       const result = await client.query(insertQuery, values);
@@ -46,7 +59,7 @@ export async function insertHighscoreSnapshots(
     );
   } catch (error) {
     await client.query('ROLLBACK');
-    logger.error('Error inserting highscore snapshots:', error);
+    logger.error(`Database error while inserting '${section}' highscore snapshots:`, error);
     throw error;
   } finally {
     client.release();
