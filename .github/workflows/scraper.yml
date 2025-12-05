@@ -9,6 +9,7 @@ jobs:
   scrape-and-store:
     name: Scrape highscores and store in database
     runs-on: ubuntu-latest
+    environment: dura-vault-scrapper (dura-vault / production)
 
     env:
       PGHOST: ${{ secrets.PGHOST }}
