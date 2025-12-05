@@ -17,7 +17,6 @@ jobs:
       PGDATABASE: ${{ secrets.PGDATABASE }}
       PGPORT: ${{ secrets.PGPORT }}
       SCRAPER_BASE_URL: ${{ secrets.SCRAPER_BASE_URL }}
-      NODE_ENV: production
 
     steps:
       - name: Checkout repository
