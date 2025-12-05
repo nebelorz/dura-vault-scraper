@@ -9,6 +9,7 @@ function logScrapingSummary(totalRecords: number, errors: string[]) {
   logger.info(
     `Sections scraped: ${config.scraper.sectionsToScrape.length - errors.length}/${config.scraper.sectionsToScrape.length}`,
   );
+
   if (errors.length > 0) {
     logger.warn(`Failed sections: ${errors.join(', ')}`);
   }
@@ -17,30 +18,54 @@ function logScrapingSummary(totalRecords: number, errors: string[]) {
 async function main() {
   let totalRecords = 0;
   const errors: string[] = [];
-  const logsBySection: Record<string, string[]> = {};
+  const sections = config.scraper.sectionsToScrape;
 
-  for (const section of config.scraper.sectionsToScrape) {
+  logger.section('Initializing scraping...');
+
+  const scrapePromises = sections.map(async (section) => {
     try {
       const { entries, logs } = await scrapeHighscore(section);
-      logsBySection[section] = logs;
-
-      // Insert into DB
-      if (entries.length > 0) {
-        await insertHighscoreSnapshots(entries, section);
-      }
-
-      totalRecords += entries.length;
+      return { section, entries, logs, error: null };
     } catch (error) {
-      logger.error(`Failed to scrape ${section}:`, error);
-      errors.push(section);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      return {
+        section,
+        entries: [],
+        logs: [`[${section}] ERROR: Failed to scrape - ${errorMsg}`],
+        error,
+      };
+    }
+  });
+
+  const results = await Promise.all(scrapePromises);
+
+  // Log scraped sections outputs
+  for (const { logs } of results) {
+    for (const line of logs) {
+      logger.info(line);
     }
   }
 
-  // Log scraper outputs
-  for (const section of config.scraper.sectionsToScrape) {
-    if (logsBySection[section]) {
-      for (const line of logsBySection[section]) {
-        logger.info(line);
+  // Log scraping errors & exit if any
+  const failedSections = results.filter((r) => r.error);
+  if (failedSections.length > 0) {
+    logger.error(
+      `\nCritical: Scraping failed for ${failedSections.length} section(s): ${failedSections.map((f) => f.section).join(', ')}`,
+    );
+    await closePool();
+    process.exit(1);
+  }
+
+  // Insert into DB
+  logger.section('Inserting scraped data into database...');
+  for (const { section, entries } of results) {
+    if (entries.length > 0) {
+      try {
+        await insertHighscoreSnapshots(entries, section);
+        totalRecords += entries.length;
+      } catch (dbError) {
+        logger.error(`Failed to insert ${section} into DB:`, dbError);
+        errors.push(section);
       }
     }
   }

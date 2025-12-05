@@ -18,7 +18,7 @@ async function main() {
     await client.query(queryCreateIndexes);
     logger.info('Indexes created successfully');
 
-    logger.section('Database initialization completed');
+    logger.info('Database initialization completed');
   } catch (err) {
     throw new Error('Database initialization failed', { cause: err });
   } finally {
