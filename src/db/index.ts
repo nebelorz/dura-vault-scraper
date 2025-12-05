@@ -1,1 +1,1 @@
-export { insertHighscoreSnapshots, closePool, checkDatabaseConnection } from './repository';
+export { insertHighscoreSnapshots, closePool } from './repository';

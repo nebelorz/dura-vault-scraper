@@ -9,13 +9,7 @@ export const config = {
     sectionsToScrape: [
       'experience',
       'magic',
-      'shield',
-      'distance',
-      'club',
-      'sword',
-      'axe',
-      'fist',
-      'fishing',
+
     ] as const,
   },
   database: {

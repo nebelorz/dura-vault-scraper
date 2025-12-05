@@ -8,7 +8,14 @@
     "eslint": "eslint src --ext .ts --max-warnings 0",
     "start:db": "ts-node src/db/init-db.ts",
     "start:dev": "ts-node src/main.ts",
-    "start:production": "npm run build && node dist/main.js"
+    "start:production": "npm run build && node dist/db/init-db.js && node dist/main.js",
+    "docker:build": "docker build -t dura-vault-scraper .",
+    "docker:build:clean": "docker build -t dura-vault-scraper . && docker image prune -f",
+    "docker:up": "docker-compose up --build",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:ps": "docker-compose ps",
+    "docker:prune": "docker image prune -f"
   },
   "keywords": [],
   "author": "",
