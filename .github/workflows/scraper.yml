@@ -17,8 +17,8 @@ jobs:
       PGPASSWORD: ${{ secrets.PGPASSWORD }}
       PGDATABASE: ${{ secrets.PGDATABASE }}
       PGPORT: ${{ secrets.PGPORT }}
-      SCRAPER_BASE_URL: ${{ secrets.SCRAPER_BASE_URL }}
-      SCRAPER_PAGES_TO_SCRAP: ${{ secrets.SCRAPER_PAGES_TO_SCRAP }}
+      SCRAPER_BASE_URL: ${{ vars.SCRAPER_BASE_URL }}
+      SCRAPER_PAGES_TO_SCRAP: ${{ vars.SCRAPER_PAGES_TO_SCRAP }}
 
     steps:
       - name: Clone repository
