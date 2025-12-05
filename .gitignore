@@ -22,7 +22,7 @@ logs/
 Thumbs.db
 
 # IDE
-.github/
+.github/agents/
 .vscode/
 .idea/
 *.swp

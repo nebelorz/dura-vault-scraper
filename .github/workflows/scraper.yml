@@ -1,0 +1,42 @@
+name: Dura Vault Highscores Scraper
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '5 15 * * *'
+
+jobs:
+  scrape-and-store:
+    name: Scrape highscores and store in database
+    runs-on: ubuntu-latest
+
+    env:
+      PGHOST: ${{ secrets.PGHOST }}
+      PGUSER: ${{ secrets.PGUSER }}
+      PGPASSWORD: ${{ secrets.PGPASSWORD }}
+      PGDATABASE: ${{ secrets.PGDATABASE }}
+      PGPORT: ${{ secrets.PGPORT }}
+      SCRAPER_BASE_URL: ${{ secrets.SCRAPER_BASE_URL }}
+      NODE_ENV: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript project
+        run: npm run build
+
+      - name: Initialize database schema
+        run: node dist/db/init-db.js
+
+      - name: Execute scraper
+        run: node dist/main.js
