@@ -23,6 +23,7 @@ Create a `.env` file in the project root:
 
 ```
 SCRAPER_BASE_URL=https://example.com
+SCRAPER_PAGES_TO_SCRAP=5
 PGHOST=localhost
 PGUSER=youruser
 PGPASSWORD=yourpassword
@@ -44,8 +45,7 @@ npm run start:db
   ```
 - Production (compiled):
   ```sh
-  npm run build
-  npm start
+  npm run start:production
   ```
 
 ## Linting
@@ -53,7 +53,7 @@ npm run start:db
 Run ESLint on all source files:
 
 ```sh
-npm run lint
+npm run eslint
 ```
 
 ## Project Structure
