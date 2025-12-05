@@ -20,7 +20,7 @@ async function main() {
 
     logger.section('Database initialization completed');
   } catch (err) {
-    logger.error('Error initializing DB:', err);
+    throw new Error('Database initialization failed', { cause: err });
   } finally {
     await client.end();
   }

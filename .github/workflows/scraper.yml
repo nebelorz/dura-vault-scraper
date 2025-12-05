@@ -9,7 +9,7 @@ jobs:
   scrape-and-store:
     name: Scrape highscores and store in database
     runs-on: ubuntu-latest
-    environment: dura-vault-scrapper (dura-vault / production)
+    environment: dura-vault-scrapper
 
     env:
       PGHOST: ${{ secrets.PGHOST }}
@@ -18,24 +18,25 @@ jobs:
       PGDATABASE: ${{ secrets.PGDATABASE }}
       PGPORT: ${{ secrets.PGPORT }}
       SCRAPER_BASE_URL: ${{ secrets.SCRAPER_BASE_URL }}
+      SCRAPER_PAGES_TO_SCRAP: ${{ secrets.SCRAPER_PAGES_TO_SCRAP }}
 
     steps:
-      - name: Checkout repository
+      - name: Clone repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Install Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Install dependencies (npm ci)
         run: npm ci
 
-      - name: Build TypeScript project
+      - name: Build TS project
         run: npm run build
 
-      - name: Initialize database schema
+      - name: Execute database initialization
         run: node dist/db/init-db.js
         env:
           NODE_ENV: production
