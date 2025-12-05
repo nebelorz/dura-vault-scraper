@@ -37,6 +37,10 @@ jobs:
 
       - name: Initialize database schema
         run: node dist/db/init-db.js
+        env:
+          NODE_ENV: production
 
       - name: Execute scraper
         run: node dist/main.js
+        env:
+          NODE_ENV: production
