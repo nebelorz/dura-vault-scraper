@@ -6,11 +6,7 @@ export const config = {
   scraper: {
     baseUrl: process.env.SCRAPER_BASE_URL,
     scrapNumberOfPages: 1,
-    sectionsToScrape: [
-      'experience',
-      'magic',
-
-    ] as const,
+    sectionsToScrape: ['experience', 'magic'] as const,
   },
   database: {
     host: process.env.PGHOST,
@@ -18,6 +14,7 @@ export const config = {
     password: process.env.PGPASSWORD,
     database: process.env.PGDATABASE,
     port: parseInt(process.env.PGPORT!),
+    ssl: { rejectUnauthorized: false },
   },
   fetchHTML: {
     maxRetries: 3,
