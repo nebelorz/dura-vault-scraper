@@ -32,6 +32,7 @@ services:
       PGUSER: ${PGUSER}
       PGPASSWORD: ${PGPASSWORD}
       SCRAPER_BASE_URL: ${SCRAPER_BASE_URL}
+      SCRAPER_PAGES_TO_SCRAP: ${SCRAPER_PAGES_TO_SCRAP}
     tty: true
 
 volumes:

@@ -5,7 +5,7 @@ dotenv.config();
 export const config = {
   scraper: {
     baseUrl: process.env.SCRAPER_BASE_URL,
-    scrapNumberOfPages: 1,
+    scrapNumberOfPages: parseInt(process.env.SCRAPER_PAGES_TO_SCRAP!),
     sectionsToScrape: [
       'experience',
       'magic',

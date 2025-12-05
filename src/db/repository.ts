@@ -10,39 +10,53 @@ export async function insertHighscoreSnapshots(
   section: HighscoreSection,
   scrapeDate: Date = new Date(),
 ): Promise<void> {
+  if (entries.length === 0) {
+    logger.warn(`No entries to insert for section '${section}'`);
+    return;
+  }
+
   const client = await pool.connect();
 
   try {
     await client.query('BEGIN');
 
-    const insertQuery = `
-      INSERT INTO highscore_snapshots (scrape_date, section, rank, name, vocation, level, points)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      ON CONFLICT (scrape_date, section, name) DO NOTHING
-    `;
+    const dateStr = scrapeDate.toISOString().split('T')[0];
 
-    let insertedCount = 0;
+    const values: any[] = [];
+    const placeholders: string[] = [];
 
+    let paramIndex = 1;
     for (const entry of entries) {
-      const values = [
-        scrapeDate.toISOString().split('T')[0], // YYYY-MM-DD
+      placeholders.push(
+        `($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3}, $${paramIndex + 4}, $${paramIndex + 5}, $${paramIndex + 6})`,
+      );
+
+      values.push(
+        dateStr,
         section,
         entry.rank,
         entry.name,
         entry.vocation,
         entry.level,
         entry.points || null,
-      ];
+      );
 
-      const result = await client.query(insertQuery, values);
-      if (result.rowCount && result.rowCount > 0) {
-        insertedCount++;
-      }
+      paramIndex += 7;
     }
 
+    // Insert query
+    const insertQuery = `
+      INSERT INTO highscore_snapshots (scrape_date, section, rank, name, vocation, level, points)
+      VALUES ${placeholders.join(', ')}
+      ON CONFLICT (scrape_date, section, name) DO NOTHING
+    `;
+
+    const result = await client.query(insertQuery, values);
     await client.query('COMMIT');
+
+    const insertedCount = result.rowCount || 0;
     logger.info(
-      `Inserted ${insertedCount} records for '${section}' highscores on ${scrapeDate.toISOString().split('T')[0]}`,
+      `Inserted ${insertedCount}/${entries.length} records for '${section}' on ${dateStr}`,
     );
   } catch (error) {
     await client.query('ROLLBACK');
