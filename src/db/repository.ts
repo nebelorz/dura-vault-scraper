@@ -42,7 +42,7 @@ export async function insertHighscoreSnapshots(
 
     await client.query('COMMIT');
     logger.info(
-      `Inserted ${insertedCount} records for '${section}' highscores on ${scrapeDate.toISOString().split('T')[0]}`,
+      `Inserted ${insertedCount} records for '${section}' highscores for date ${scrapeDate.toISOString().split('T')[0]}`,
     );
   } catch (error) {
     await client.query('ROLLBACK');
