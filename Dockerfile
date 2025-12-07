@@ -8,4 +8,5 @@ RUN npm run build
 # Remove devDependencies to shrink image size
 RUN npm prune --production
 
-CMD node dist/db/init-db.js && node dist/main.js
+# By default, only initialize the database. To run the scraper read README_DOCKER.md
+CMD node dist/db/init-db.js
