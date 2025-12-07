@@ -1,6 +1,7 @@
 import {
   closePool,
   insertTempHighscoreSnapshots,
+  insertTop25Gainers,
   removeOldSnapshotsFromTempHighscoreSnapshotTable,
 } from './db';
 import { config } from './config';
@@ -64,7 +65,7 @@ async function main() {
     process.exit(1);
   }
 
-  // Insert into temp_highscore_snapshots
+  // Insert into temp_highscore_snapshots table
   logger.section('Inserting scraped data into database...');
   for (const { section, entries } of results) {
     if (entries.length > 0) {
@@ -75,6 +76,20 @@ async function main() {
         logger.error(`Failed to insert ${section} into DB:`, dbError);
         errors.push(section);
       }
+    }
+  }
+
+  // Insert into highscores_top25 table
+  logger.section('Calculating and inserting top 25 gainers...');
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+
+  for (const section of sections) {
+    try {
+      await insertTop25Gainers(section, today, yesterday);
+    } catch (err) {
+      logger.error(`Failed to insert top 25 for section ${section}:`, err);
     }
   }
 
