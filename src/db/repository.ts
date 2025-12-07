@@ -46,7 +46,7 @@ export async function insertHighscoreSnapshots(
 
     // Insert query
     const insertQuery = `
-      INSERT INTO highscore_snapshots (scrape_date, section, rank, name, vocation, level, points)
+      INSERT INTO temp_highscore_snapshots (scrape_date, section, rank, name, vocation, level, points)
       VALUES ${placeholders.join(', ')}
       ON CONFLICT (scrape_date, section, name) DO NOTHING
     `;
