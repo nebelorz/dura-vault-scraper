@@ -1,1 +1,6 @@
-export { insertHighscoreSnapshots, closePool } from './repository';
+export {
+  insertTempHighscoreSnapshots,
+  insertTop25Gainers,
+  removeOldSnapshotsFromTempHighscoreSnapshotTable,
+  closePool,
+} from './repository';
