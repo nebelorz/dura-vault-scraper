@@ -1,4 +1,4 @@
-name: Dura Vault Highscores Scraper
+name: Dura Vault - Highscores Scraper + DB insert
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   scrape-and-store:
-    name: Scrape highscores and store in database
+    name: Scrape + DB insert
     runs-on: ubuntu-latest
     environment: dura-vault-scrapper
 
