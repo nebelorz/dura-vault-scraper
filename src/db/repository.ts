@@ -5,7 +5,26 @@ import type { HighscoreEntry, HighscoreSection } from '../types';
 
 const pool = new Pool(config.database);
 
-export async function insertHighscoreSnapshots(
+/**
+ * Cleans up old records from the temp_highscore_snapshots table.
+ * Removes records older than 1 day.
+ */
+export async function removeOldSnapshotsFromTempHighscoreSnapshotTable(): Promise<void> {
+  const client = await pool.connect();
+  try {
+    const query =
+      "DELETE FROM temp_highscore_snapshots WHERE scrape_date < CURRENT_DATE - INTERVAL '1 day'";
+    const result = await client.query(query);
+    logger.info(`Cleaned up ${result.rowCount} old records from temp_highscore_snapshots.`);
+  } catch (error) {
+    logger.error('Error cleaning up old temp snapshots:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function insertTempHighscoreSnapshots(
   entries: HighscoreEntry[],
   section: HighscoreSection,
   scrapeDate: Date = new Date(),
