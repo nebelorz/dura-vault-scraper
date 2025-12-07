@@ -1,7 +1,11 @@
+import {
+  closePool,
+  insertTempHighscoreSnapshots,
+  removeOldSnapshotsFromTempHighscoreSnapshotTable,
+} from './db';
+import { config } from './config';
 import { logger } from './utils/logger';
 import { scrapeHighscore } from './core';
-import { closePool, insertHighscoreSnapshots } from './db';
-import { config } from './config';
 
 function logScrapingSummary(totalRecords: number, errors: string[]) {
   logger.section('Scraping completed');
@@ -16,6 +20,10 @@ function logScrapingSummary(totalRecords: number, errors: string[]) {
 }
 
 async function main() {
+  // Remove old records from temp_highscore_snapshots
+  logger.section('Cleaning up old temp snapshots...');
+  await removeOldSnapshotsFromTempHighscoreSnapshotTable();
+
   let totalRecords = 0;
   const errors: string[] = [];
   const sections = config.scraper.sectionsToScrape;
@@ -56,12 +64,12 @@ async function main() {
     process.exit(1);
   }
 
-  // Insert into DB
+  // Insert into temp_highscore_snapshots
   logger.section('Inserting scraped data into database...');
   for (const { section, entries } of results) {
     if (entries.length > 0) {
       try {
-        await insertHighscoreSnapshots(entries, section);
+        await insertTempHighscoreSnapshots(entries, section);
         totalRecords += entries.length;
       } catch (dbError) {
         logger.error(`Failed to insert ${section} into DB:`, dbError);
