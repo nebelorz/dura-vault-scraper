@@ -8,27 +8,15 @@ import { config } from './config';
 import { logger } from './utils/logger';
 import { scrapeHighscore } from './core';
 
-function logScrapingSummary(totalRecords: number, errors: string[]) {
-  logger.section('Scraping completed');
-  logger.info(`Total records: ${totalRecords}`);
-  logger.info(
-    `Sections scraped: ${config.scraper.sectionsToScrape.length - errors.length}/${config.scraper.sectionsToScrape.length}`,
-  );
-
-  if (errors.length > 0) {
-    logger.warn(`Failed sections: ${errors.join(', ')}`);
-  }
-}
-
 async function main() {
   // Remove old records from temp_highscore_snapshots
   logger.section('Cleaning up old temp snapshots...');
   await removeOldSnapshotsFromTempHighscoreSnapshotTable();
 
-  let totalRecords = 0;
   const errors: string[] = [];
   const sections = config.scraper.sectionsToScrape;
 
+  // Initialize scraping
   logger.section('Initializing scraping...');
 
   const scrapePromises = sections.map(async (section) => {
@@ -66,12 +54,11 @@ async function main() {
   }
 
   // Insert into temp_highscore_snapshots table
-  logger.section('Inserting scraped data into database...');
+  logger.section('Inserting scraped data into temp_highscore_snapshots table...');
   for (const { section, entries } of results) {
     if (entries.length > 0) {
       try {
         await insertTempHighscoreSnapshots(entries, section);
-        totalRecords += entries.length;
       } catch (dbError) {
         logger.error(`Failed to insert ${section} into DB:`, dbError);
         errors.push(section);
@@ -80,7 +67,7 @@ async function main() {
   }
 
   // Insert into highscores_top25 table
-  logger.section('Calculating and inserting top 25 gainers...');
+  logger.section('Inserting top 25 gainers into highscore_top25 table...');
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
@@ -93,8 +80,7 @@ async function main() {
     }
   }
 
-  // Log scraping summary
-  logScrapingSummary(totalRecords, errors);
+  // Close DB connection
   await closePool();
   logger.info('Database connection closed');
 }

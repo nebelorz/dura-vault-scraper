@@ -15,7 +15,11 @@ export async function removeOldSnapshotsFromTempHighscoreSnapshotTable(): Promis
     const query =
       "DELETE FROM temp_highscore_snapshots WHERE scrape_date < CURRENT_DATE - INTERVAL '1 day'";
     const result = await client.query(query);
-    logger.info(`Cleaned up ${result.rowCount} old records from temp_highscore_snapshots.`);
+    if (result.rowCount === 0) {
+      logger.info('No old records found to clean up in temp_highscore_snapshots.');
+    } else {
+      logger.info(`Cleaned up ${result.rowCount} old records from temp_highscore_snapshots.`);
+    }
   } catch (error) {
     logger.error('Error cleaning up old temp snapshots:', error);
     throw error;
@@ -74,9 +78,15 @@ export async function insertTempHighscoreSnapshots(
     await client.query('COMMIT');
 
     const insertedCount = result.rowCount || 0;
-    logger.info(
-      `Inserted ${insertedCount}/${entries.length} records for '${section}' on ${dateStr}`,
-    );
+    if (insertedCount === 0) {
+      logger.info(
+        `No new records to insert received from the scraping process for section '${section}' on ${dateStr}.`,
+      );
+    } else {
+      logger.info(
+        `Inserted ${insertedCount}/${entries.length} records for '${section}' on ${dateStr}`,
+      );
+    }
   } catch (error) {
     await client.query('ROLLBACK');
     logger.error(`Database error while inserting '${section}' highscore snapshots:`, error);
