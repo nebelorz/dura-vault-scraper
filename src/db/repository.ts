@@ -6,7 +6,7 @@ import type { HighscoreEntry, HighscoreSection } from '../types';
 const pool = new Pool(config.database);
 
 /**
- * Cleans up old records from the temp_highscore_snapshots table.
+ * Removes old records from the temp_highscore_snapshots table.
  * Removes records older than 1 day.
  */
 export async function removeOldSnapshotsFromTempHighscoreSnapshotTable(): Promise<void> {
@@ -16,12 +16,12 @@ export async function removeOldSnapshotsFromTempHighscoreSnapshotTable(): Promis
       "DELETE FROM temp_highscore_snapshots WHERE scrape_date < CURRENT_DATE - INTERVAL '1 day'";
     const result = await client.query(query);
     if (result.rowCount === 0) {
-      logger.info('No old records found to clean up in temp_highscore_snapshots.');
+      logger.info('No old records found to remove from temp_highscore_snapshots.');
     } else {
       logger.info(`Cleaned up ${result.rowCount} old records from temp_highscore_snapshots.`);
     }
   } catch (error) {
-    logger.error('Error cleaning up old temp snapshots:', error);
+    logger.error('Error removing old temp snapshots:', error);
     throw error;
   } finally {
     client.release();
