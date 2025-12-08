@@ -8,13 +8,15 @@
 
 This project uses Docker Compose to orchestrate both the PostgreSQL database and the scraper app. The scraper does NOT run automatically on container start—you trigger it manually for full control.
 
-| Step | Component                     | Description                 |
-| ---- | ----------------------------- | --------------------------- |
-| 1    | Scraper (manual)              | Runs the scraper            |
-| 2    | temp_highscore_snapshots (DB) | Stores raw snapshots        |
-| 3    | highscore_top25 (DB)          | Stores daily top 25 gainers |
+| Step | Component                     | Description                  |
+| ---- | ----------------------------- | ---------------------------- |
+| 1    | main.ts (manual)              | Orchestrates scraping and DB |
+| 2    | scraper/main-scraper.ts       | Scraper logic                |
+| 3    | db/main-db.ts                 | Database logic               |
+| 4    | temp_highscore_snapshots (DB) | Stores raw snapshots         |
+| 5    | highscore_top25 (DB)          | Stores daily top 25 gainers  |
 
-Flow: **Scraper (manual) → temp_highscore_snapshots → highscore_top25**
+Flow: **main.ts → mainScraper → mainDb → temp_highscore_snapshots → highscore_top25**
 
 ---
 
@@ -41,13 +43,13 @@ This will:
 
 ### 2. Run the scraper manually (each time you want to scrape)
 
-**Run compiled JavaScript:**
+**Run compiled JavaScript (entrypoint):**
 
 ```sh
 docker exec dura-vault-scraper node dist/main.js
 ```
 
-**Run TypeScript directly (for development/debug):**
+**Run TypeScript directly (entrypoint, for development/debug):**
 
 ```sh
 docker exec dura-vault-scraper npx ts-node src/main.ts

@@ -1,6 +1,6 @@
 # Dura Vault Scraper
 
-> **A robust, type-safe Node.js + TypeScript scraper for Dura Vault highscores, with PostgreSQL persistence and modern tooling.**
+> A robust, type-safe Node.js + TypeScript scraper for Dura Vault highscores, with PostgreSQL persistence and modern tooling.
 
 ---
 
@@ -13,16 +13,19 @@ Dura Vault Scraper automates the daily download of Dura Vault highscores, stores
 ## 🗺️ Architecture & Data Flow
 
 ```
-Scraper (Node.js)
+main.ts (entrypoint)
+  |
+  v
+mainScraper (scraper/main-scraper.ts)
+  |
+  v
+mainDb (db/main-db.ts)
   |
   v
 temp_highscore_snapshots (raw daily data)
   |
   v
 highscore_top25 (top 25 gainers per section)
-  |
-  v
-SPA
 ```
 
 ---
@@ -94,11 +97,11 @@ npm run start:db
 
 ### 4. Run the scraper
 
-- **Development:**
+**Development:**
   ```sh
   npm run start:dev
   ```
-- **Production (compiled):**
+**Production (compiled):**
   ```sh
   npm run start:production
   ```
@@ -107,16 +110,19 @@ npm run start:db
 
 ## 🧩 Project Structure
 
-| Folder/File | Description                |
-| ----------- | -------------------------- |
-| src/        | Main source code           |
-| core/       | Scraping and parsing logic |
-| db/         | Database access and logic  |
-| utils/      | Utilities and helpers      |
-| types/      | TypeScript types           |
-| dist/       | Compiled output            |
-| config/     | Advanced configuration     |
-| .env        | Environment variables      |
+| Folder/File             | Description                             |
+| ----------------------- | --------------------------------------- |
+| src/                    | Main source code                        |
+| main.ts                 | Entrypoint, orchestrates scraper and DB |
+| scraper/                | Scraping and parsing logic              |
+| scraper/main-scraper.ts | Scraper main logic                      |
+| db/                     | Database access and logic               |
+| db/main-db.ts           | DB main logic                           |
+| utils/                  | Utilities and helpers                   |
+| types/                  | TypeScript types                        |
+| dist/                   | Compiled output                         |
+| config/                 | Advanced configuration                  |
+| .env                    | Environment variables                   |
 
 ---
 
@@ -152,11 +158,11 @@ npm run eslint
 npm run start:db
 ```
 
-### Run the scraper
+### Run the scraper and database logic
 
 ```sh
-npm run start:dev        # Development
-npm run start:production # Production
+npm run start:dev        # Development (runs main.ts)
+npm run start:production # Production (runs main.ts)
 ```
 
 ---
