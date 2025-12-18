@@ -14,9 +14,9 @@ This project uses Docker Compose to orchestrate both the PostgreSQL database and
 | 2    | scraper/main-scraper.ts       | Scraper logic                |
 | 3    | db/main-db.ts                 | Database logic               |
 | 4    | temp_highscore_snapshots (DB) | Stores raw snapshots         |
-| 5    | highscore_top25 (DB)          | Stores daily top 25 gainers  |
+| 5    | highscore_top (DB)            | Stores daily top gainers  |
 
-Flow: **main.ts → mainScraper → mainDb → temp_highscore_snapshots → highscore_top25**
+Flow: **main.ts → mainScraper → mainDb → temp_highscore_snapshots → highscore_top**
 
 ---
 

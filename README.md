@@ -6,7 +6,7 @@
 
 ## 🚀 What does this project do?
 
-Dura Vault Scraper automates the daily download of Dura Vault highscores, stores historical snapshots, and calculates the top 25 gainers for each section, all in a PostgreSQL database optimized for queries and analysis.
+Dura Vault Scraper automates the daily download of Dura Vault highscores, stores historical snapshots, and calculates the top gainers for each section, all in a PostgreSQL database optimized for queries and analysis.
 
 ---
 
@@ -25,7 +25,7 @@ mainDb (db/main-db.ts)
 temp_highscore_snapshots (raw daily data)
   |
   v
-highscore_top25 (top 25 gainers per section)
+highscore_top (top gainers per section)
 ```
 
 ---
@@ -47,12 +47,12 @@ highscore_top25 (top 25 gainers per section)
 
 **UNIQUE:** (scrape_date, section, name)
 
-### highscore_top25
+### highscore_top
 
 | Column      | Type      | Description                        |
 | ----------- | --------- | ---------------------------------- |
 | id          | SERIAL PK | Unique identifier                  |
-| scrape_date | DATE      | Top 25 calculation date            |
+| scrape_date | DATE      | Top gainers calculation date       |
 | section     | VARCHAR   | Highscore section                  |
 | level       | INT       | Character's current level          |
 | points      | BIGINT    | Current points                     |
@@ -135,7 +135,7 @@ npm run start:db
 | 2025-12-07  | experience | PlayerOne | 120   | 12345678 | Knight   | 1    |
 | 2025-12-07  | magic      | MageX     | 90    | null     | Sorcerer | 3    |
 
-### highscore_top25
+### highscore_top
 
 | scrape_date | section    | name      | level | points   | vocation | rank | gain_points | gain_level | gain_rank |
 | ----------- | ---------- | --------- | ----- | -------- | -------- | ---- | ----------- | ---------- | --------- |
@@ -169,9 +169,9 @@ npm run start:production # Production (runs main.ts)
 
 ## 🧠 FAQ
 
-**What happens if I change data in temp_highscore_snapshots and recalculate the top 25?**
+**What happens if I change data in temp_highscore_snapshots and recalculate the top gainers?**
 
-Existing records in highscore_top25 for the same day, section, and character are not overwritten. If you want to update, you must manually delete those records first.
+Existing records in highscore_top for the same day, section, and character are not overwritten. If you want to update, you must manually delete those records first.
 
 **Why are there fields like gain_rank?**
 

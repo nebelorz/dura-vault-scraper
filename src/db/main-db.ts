@@ -1,10 +1,10 @@
-import { closePool, insertTempHighscoreSnapshots, insertTop25Gainers } from '.';
+import { closePool, insertTempHighscoreSnapshots, insertTopGainers } from '.';
 import { logger } from '../utils/logger';
 import type { HighscoreSection } from '../types';
 
 /**
  * Inserts scraped data into the database tables.
- * First inserts raw entries into temp_highscore_snapshots, then calculates and inserts top 25 gainers.
+ * First inserts raw entries into temp_highscore_snapshots, then calculates and inserts top gainers.
  * Closes the database connection at the end.
  *
  * @param {Array<{ section: HighscoreSection; entries: any[] }>} scrapeResults
@@ -24,17 +24,17 @@ export async function mainDb(scrapeResults: Array<{ section: HighscoreSection; e
     }
   }
 
-  // Insert top 25 gainers into highscore_top25 table
-  logger.section('Inserting top 25 gainers into highscore_top25 table...');
+  // Insert top gainers into highscore_top table
+  logger.section('Inserting top gainers into highscore_top table...');
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
 
   for (const { section } of scrapeResults) {
     try {
-      await insertTop25Gainers(section, today, yesterday);
+      await insertTopGainers(section, today, yesterday);
     } catch (err) {
-      logger.error(`Failed to insert top 25 for section ${section}:`, err);
+      logger.error(`Failed to insert top gainers for section ${section}:`, err);
     }
   }
 

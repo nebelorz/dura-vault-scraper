@@ -1,7 +1,7 @@
 export { mainDb } from './main-db';
 export {
   insertTempHighscoreSnapshots,
-  insertTop25Gainers,
+  insertTopGainers,
   removeOldSnapshotsFromTempHighscoreSnapshotTable,
   closePool,
 } from './repository';

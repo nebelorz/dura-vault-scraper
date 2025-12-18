@@ -97,13 +97,14 @@ export async function insertTempHighscoreSnapshots(
 }
 
 /**
- * Calculates the top 25 gainers for a section and date, and inserts them into highscore_top25.
+ * Calculates the top gainers for a section and date, and inserts them into highscore_top.
  * Only inserts players with a gain > 0 (points for experience, level for other sections).
  */
-export async function insertTop25Gainers(
+export async function insertTopGainers(
   section: HighscoreSection,
   today: Date,
   yesterday: Date,
+  numberOfRecords = 100,
 ): Promise<void> {
   const client = await pool.connect();
   try {
@@ -117,12 +118,12 @@ export async function insertTop25Gainers(
     const checkResult = await client.query(checkQuery, [yesterdayStr, section]);
     if (checkResult.rowCount === 0) {
       logger.warn(
-        `No data for section '${section}' on previous day (${yesterdayStr}). Skipping top 25 insert for ${todayStr}.`,
+        `No data for section '${section}' on previous day (${yesterdayStr}). Skipping top gainers insert for ${todayStr}.`,
       );
       return;
     }
 
-    // Calculate gain and get top 25
+    // Calculate gain and get top gainers
     const query = `
       SELECT
         t.scrape_date,
@@ -143,18 +144,18 @@ export async function insertTop25Gainers(
       WHERE t.scrape_date = $2
         AND t.section = $3
       ORDER BY gain_points DESC
-      LIMIT 25;
+      LIMIT ${numberOfRecords};
     `;
 
     const result = await client.query(query, [yesterdayStr, todayStr, section]);
     const rows = result.rows.filter((row) => row.gain_points > 0 || row.gain_level > 0);
 
     if (rows.length === 0) {
-      logger.info(`No top 25 gainers with positive gain for section '${section}' on ${todayStr}`);
+      logger.info(`No top gainers with positive gain for section '${section}' on ${todayStr}`);
       return;
     }
 
-    // Insert for highscore_top25
+    // Insert for highscore_top
     const insertValues: any[] = [];
     const placeholders: string[] = [];
     let paramIndex = 1;
@@ -178,7 +179,7 @@ export async function insertTop25Gainers(
     }
 
     const insertQuery = `
-      INSERT INTO highscore_top25 (
+      INSERT INTO highscore_top (
         scrape_date, section, level, points, name, vocation, rank, gain_points, gain_level, gain_rank
       ) VALUES ${placeholders.join(', ')}
       ON CONFLICT (scrape_date, section, name) DO NOTHING
@@ -187,7 +188,7 @@ export async function insertTop25Gainers(
     await client.query(insertQuery, insertValues);
     logger.info(`Inserted ${rows.length} top gainers for section '${section}' on ${todayStr}`);
   } catch (error) {
-    logger.error(`Error inserting top 25 gainers for section '${section}':`, error);
+    logger.error(`Error inserting top gainers for section '${section}':`, error);
     throw error;
   } finally {
     client.release();
