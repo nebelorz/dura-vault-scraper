@@ -9,6 +9,7 @@
 Dura Vault Scraper automates the daily download of Dura Vault highscores, stores historical snapshots, and calculates top gainers and losses for each section, all in a PostgreSQL database optimized for queries and analysis.
 
 **Key Features:**
+
 - ✅ Experience gains tracking (points-based)
 - ✅ Experience losses tracking (separate `experience_loss` section)
 - ✅ Skill gains tracking (level-based: magic, fishing, shield, etc.)
@@ -39,11 +40,12 @@ mainDb (db/main-db.ts)
   |
   +----> insertExperienceLosses()
          └─> experience_loss section (points < 0)
-                  
+
 Final: highscore_top table contains all top gainers + losses
 ```
 
 **Data Types:**
+
 - **HighscoreSection:** Official game sections (experience, magic, shield, distance, club, sword, axe, fist, fishing)
 - **CustomSection:** Project-specific sections (experience_loss)
 - **Section:** Union of both types
@@ -118,13 +120,16 @@ npm run start:db
 ### 4. Run the scraper
 
 **Development:**
-  ```sh
-  npm run start:dev
-  ```
+
+```sh
+npm run start:dev
+```
+
 **Production (compiled):**
-  ```sh
-  npm run start:production
-  ```
+
+```sh
+npm run start:production
+```
 
 ---
 
@@ -169,12 +174,13 @@ npm run start:db
 
 ### highscore_top - Skill Gains
 
-| scrape_date | section | name  | level | points | vocation | rank | gain_points | gain_level | gain_rank |
-| ----------- | ------- | ----- | ----- | ------ | -------- | ---- | ----------- | ---------- | --------- |
-| 2025-12-08  | magic   | MageX | 92    | null   | Sorcerer | 3    | null        | 2          | 0         |
-| 2025-12-08  | fishing | Fisher| 75    | null   | Knight   | 8    | null        | 1          | 1         |
+| scrape_date | section | name   | level | points | vocation | rank | gain_points | gain_level | gain_rank |
+| ----------- | ------- | ------ | ----- | ------ | -------- | ---- | ----------- | ---------- | --------- |
+| 2025-12-08  | magic   | MageX  | 92    | null   | Sorcerer | 3    | null        | 2          | 0         |
+| 2025-12-08  | fishing | Fisher | 75    | null   | Knight   | 8    | null        | 1          | 1         |
 
-**Note:** 
+**Note:**
+
 - `experience` and `experience_loss` use `gain_points` (points column)
 - Other sections (magic, fishing, shield, etc.) use `gain_level` (level column)
 - `gain_points` is `null` for skill sections
