@@ -8,3 +8,7 @@ export type HighscoreSection =
   | 'axe'
   | 'fist'
   | 'fishing';
+
+export type CustomSection = 'experience_loss';
+
+export type Section = HighscoreSection | CustomSection;

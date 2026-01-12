@@ -1,4 +1,10 @@
-import { closePool, insertTempHighscoreSnapshots, insertTopGainers } from '.';
+import {
+  closePool,
+  insertTempHighscoreSnapshots,
+  insertTopGainers,
+  insertTopSkillGainers,
+  insertExperienceLosses,
+} from '.';
 import { logger } from '../utils/logger';
 import type { HighscoreSection } from '../types';
 
@@ -24,17 +30,35 @@ export async function mainDb(scrapeResults: Array<{ section: HighscoreSection; e
     }
   }
 
-  // Insert top gainers into highscore_top table
-  logger.section('Inserting top gainers into highscore_top table...');
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
 
+  // Insert top experience gainers into highscore_top table
+  logger.section('Inserting top experience gainers into highscore_top table...');
+  try {
+    await insertTopGainers(today, yesterday);
+  } catch (err) {
+    logger.error('Failed to insert top experience gainers:', err);
+  }
+
+  // Insert experience losses into highscore_top table
+  logger.section('Inserting experience losses into highscore_top table...');
+  try {
+    await insertExperienceLosses(today, yesterday);
+  } catch (err) {
+    logger.error('Failed to insert experience losses:', err);
+  }
+
+  // Insert top skill gainers into highscore_top table
+  logger.section('Inserting top skill gainers into highscore_top table...');
   for (const { section } of scrapeResults) {
-    try {
-      await insertTopGainers(section, today, yesterday);
-    } catch (err) {
-      logger.error(`Failed to insert top gainers for section ${section}:`, err);
+    if (section !== 'experience') {
+      try {
+        await insertTopSkillGainers(section, today, yesterday);
+      } catch (err) {
+        logger.error(`Failed to insert top skill gainers for section ${section}:`, err);
+      }
     }
   }
 
