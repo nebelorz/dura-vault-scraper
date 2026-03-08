@@ -102,8 +102,13 @@ export function parseHighscore(html: string, section?: string): HighscoreEntry[]
     const vocation = nameCell.find('small').first().text().trim();
     if (!name) return;
 
-    // Parse level
-    const levelText = cells.eq(columnIndices.level).text().replace(/\D/g, '');
+    // Parse level -> the server renders a converted value as text
+    // but always embeds the real Dura server value in data-dura-value attr
+    const levelCell = cells.eq(columnIndices.level);
+    const skillValueEl = levelCell.find('.skill-value[data-dura-value]');
+    const levelText = skillValueEl.length
+      ? skillValueEl.attr('data-dura-value')!
+      : levelCell.text().replace(/\D/g, '');
     const level = parseInt(levelText, 10);
     if (isNaN(level) || level <= 0) return;
 
