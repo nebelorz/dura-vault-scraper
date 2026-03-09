@@ -142,8 +142,8 @@ Define these in your `.env` file:
 - `PGUSER` - Database user
 - `PGPASSWORD` - Database password
 - `PGDATABASE` - Database name
-- `SCRAPER_BASE_URL` - Base URL for scraping
-- `SCRAPER_PAGES_TO_SCRAP` - Number of pages to scrape
+- `HIGHSCORES_SCRAPER_BASE_URL` - Base URL for highscores scraping
+- `HIGHSCORES_SCRAPER_PAGES_TO_SCRAP` - Number of pages to scrape
 
 ---
 

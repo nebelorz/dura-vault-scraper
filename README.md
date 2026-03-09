@@ -102,8 +102,8 @@ npm install
 Create a `.env` file in the project root:
 
 ```env
-SCRAPER_BASE_URL=https://example.com
-SCRAPER_PAGES_TO_SCRAP=5
+HIGHSCORES_SCRAPER_BASE_URL=https://example.com
+HIGHSCORES_SCRAPER_PAGES_TO_SCRAP=5
 PGHOST=localhost
 PGUSER=youruser
 PGPASSWORD=yourpassword
