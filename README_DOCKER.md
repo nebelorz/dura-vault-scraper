@@ -10,13 +10,13 @@ This project uses Docker Compose to orchestrate both the PostgreSQL database and
 
 | Step | Component                     | Description                  |
 | ---- | ----------------------------- | ---------------------------- |
-| 1    | main.ts (manual)              | Orchestrates scraping and DB |
-| 2    | scraper/main-scraper.ts       | Scraper logic                |
-| 3    | db/main-db.ts                 | Database logic               |
+| 1    | highscore/main.ts (manual)             | Orchestrates scraping and DB |
+| 2    | highscore/scraper/scraper.ts           | Scraper logic                |
+| 3    | highscore/db/main-highscores-db.ts     | Database logic               |
 | 4    | temp_highscore_snapshots (DB) | Stores raw snapshots         |
 | 5    | highscore_top (DB)            | Stores daily top gainers  |
 
-Flow: **main.ts → mainScraper → mainDb → temp_highscore_snapshots → highscore_top**
+Flow: **highscore/main.ts → mainHighscoresScraper → mainHighscoresDb → temp_highscore_snapshots → highscore_top**
 
 ---
 
@@ -43,19 +43,17 @@ This will:
 
 ### 2. Run the scraper manually (each time you want to scrape)
 
-**Run compiled JavaScript (entrypoint):**
+**Run compiled JavaScript:**
 
 ```sh
-docker exec dura-vault-scraper node dist/main.js
+docker-compose run --rm scraper node dist/highscore/main.js
 ```
 
-**Run TypeScript directly (entrypoint, for development/debug):**
+**Run TypeScript directly (for development/debug):**
 
 ```sh
-docker exec dura-vault-scraper npx ts-node src/main.ts
+docker-compose run --rm scraper npx ts-node src/highscore/main.ts
 ```
-
-_Requires that ts-node and TypeScript are installed in the container._
 
 ### 3. View scraper logs
 
@@ -94,10 +92,8 @@ docker run --env-file .env dura-vault-scraper
 ### Run TypeScript directly (for development/debug)
 
 ```sh
-docker exec dura-vault-scraper npx ts-node src/main.ts
+docker-compose run --rm scraper npx ts-node src/highscore/main.ts
 ```
-
-_Useful for development or debugging. Make sure ts-node is installed in the container._
 
 ## 🔎 Useful Docker Commands
 
@@ -150,7 +146,7 @@ Define these in your `.env` file:
 ## 🧩 Typical Workflow
 
 1. `docker-compose up --build` (start DB and scraper container)
-2. `docker exec dura-vault-scraper node dist/main.js` (run the scraper)
+2. `docker-compose run --rm scraper node dist/highscore/main.js` (run the scraper)
 3. Check logs, query the database, repeat as needed
 
 ---
