@@ -21,13 +21,13 @@ Dura Vault Scraper automates the daily download of Dura Vault highscores, stores
 ## 🗺️ Architecture & Data Flow
 
 ```
-main.ts (entrypoint)
+src/highscore/main.ts (entrypoint)
   |
   v
-mainScraper (scraper/main-scraper.ts)
+mainHighscoresScraper (highscore/scraper/scraper.ts)
   |
   v
-mainDb (db/main-db.ts)
+mainHighscoresDb (highscore/db/main-highscores-db.ts)
   |
   +----> insertTempHighscoreSnapshots()
   |      └─> temp_highscore_snapshots (raw daily data)
@@ -102,8 +102,8 @@ npm install
 Create a `.env` file in the project root:
 
 ```env
-SCRAPER_BASE_URL=https://example.com
-SCRAPER_PAGES_TO_SCRAP=5
+HIGHSCORES_SCRAPER_BASE_URL=https://example.com
+HIGHSCORES_SCRAPER_PAGES_TO_SCRAP=5
 PGHOST=localhost
 PGUSER=youruser
 PGPASSWORD=yourpassword
@@ -119,35 +119,30 @@ npm run start:db
 
 ### 4. Run the scraper
 
-**Development:**
-
 ```sh
-npm run start:dev
-```
-
-**Production (compiled):**
-
-```sh
-npm run start:production
+npm run start:scrape:highscores
 ```
 
 ---
 
 ## 🧩 Project Structure
 
-| Folder/File             | Description                             |
-| ----------------------- | --------------------------------------- |
-| src/                    | Main source code                        |
-| main.ts                 | Entrypoint, orchestrates scraper and DB |
-| scraper/                | Scraping and parsing logic              |
-| scraper/main-scraper.ts | Scraper main logic                      |
-| db/                     | Database access and logic               |
-| db/main-db.ts           | DB main logic                           |
-| utils/                  | Utilities and helpers                   |
-| types/                  | TypeScript types                        |
-| dist/                   | Compiled output                         |
-| config/                 | Advanced configuration                  |
-| .env                    | Environment variables                   |
+| Folder/File                            | Description                              |
+| -------------------------------------- | ---------------------------------------- |
+| src/                                   | Main source code                         |
+| src/highscore/main.ts                  | Entrypoint, orchestrates scraper and DB  |
+| src/highscore/config.ts                | Highscore-specific configuration         |
+| src/highscore/scraper/scraper.ts       | Scraping and parsing orchestration       |
+| src/highscore/scraper/parse.ts         | HTML parsing logic                       |
+| src/highscore/db/repository.ts         | DB queries and inserts                   |
+| src/highscore/db/main-highscores-db.ts | DB insert orchestration                  |
+| src/highscore/types/                   | TypeScript types for highscore feature   |
+| src/db/config.ts                       | Shared DB connection config              |
+| src/db/pool.ts                         | Shared PostgreSQL pool                   |
+| src/db/init-db.ts                      | Database initialization script           |
+| src/utils/                             | Shared utilities (fetch-html, logger)    |
+| dist/                                  | Compiled output                          |
+| .env                                   | Environment variables                    |
 
 ---
 
@@ -204,8 +199,7 @@ npm run start:db
 ### Run the scraper and database logic
 
 ```sh
-npm run start:dev        # Development (runs main.ts)
-npm run start:production # Production (runs main.ts)
+npm run start:scrape:highscores
 ```
 
 ---

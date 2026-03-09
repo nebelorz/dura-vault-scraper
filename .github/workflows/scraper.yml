@@ -7,9 +7,9 @@ on:
 
 jobs:
   scrape-and-store:
-    name: Scrape + DB insert
+    name: Highscores Scrape + DB insert
     runs-on: ubuntu-latest
-    environment: dura-vault-scrapper
+    environment: dura-vault-scraper
 
     env:
       PGHOST: ${{ secrets.PGHOST }}
@@ -17,8 +17,8 @@ jobs:
       PGPASSWORD: ${{ secrets.PGPASSWORD }}
       PGDATABASE: ${{ secrets.PGDATABASE }}
       PGPORT: ${{ secrets.PGPORT }}
-      SCRAPER_BASE_URL: ${{ vars.SCRAPER_BASE_URL }}
-      SCRAPER_PAGES_TO_SCRAP: ${{ vars.SCRAPER_PAGES_TO_SCRAP }}
+      HIGHSCORES_SCRAPER_BASE_URL: ${{ vars.HIGHSCORES_SCRAPER_BASE_URL }}
+      HIGHSCORES_SCRAPER_PAGES_TO_SCRAP: ${{ vars.HIGHSCORES_SCRAPER_PAGES_TO_SCRAP }}
 
     steps:
       - name: Clone repository
@@ -41,7 +41,7 @@ jobs:
         env:
           NODE_ENV: production
 
-      - name: Execute scraper
-        run: node dist/main.js
+      - name: Execute Highscores Scraper
+        run: node dist/highscore/main.js
         env:
           NODE_ENV: production

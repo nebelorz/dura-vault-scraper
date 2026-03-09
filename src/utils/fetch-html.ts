@@ -1,10 +1,9 @@
-import { config } from '../config';
 import { logger } from './logger';
 import axios, { AxiosError } from 'axios';
 
-const MAX_RETRIES = config.fetchHTML.maxRetries;
-const TIMEOUT_MS = config.fetchHTML.timeoutMs;
-const RETRY_DELAY_MS = config.fetchHTML.retryDelayMs;
+const MAX_RETRIES = parseInt(process.env.FETCH_MAX_RETRIES ?? '3', 10);
+const TIMEOUT_MS = parseInt(process.env.FETCH_TIMEOUT_MS ?? '10000', 10);
+const RETRY_DELAY_MS = parseInt(process.env.FETCH_RETRY_DELAY_MS ?? '5000', 10);
 
 /**
  * Delays execution for a specified amount of time.
