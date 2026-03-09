@@ -1,0 +1,1 @@
+export { mainHighscoresScraper } from './scraper';
