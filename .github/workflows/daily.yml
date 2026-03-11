@@ -2,8 +2,6 @@ name: Dura Vault - Daily
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '5 15 * * *'
 
 jobs:
   daily:

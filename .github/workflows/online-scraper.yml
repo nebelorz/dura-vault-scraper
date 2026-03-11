@@ -2,8 +2,6 @@ name: Dura Vault - Online Scraper
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '*/15 * * * *'
 
 jobs:
   scrape-online:
