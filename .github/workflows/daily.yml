@@ -1,4 +1,4 @@
-name: Dura Vault - Highscores Scraper + DB insert
+name: Dura Vault - Daily
 
 on:
   workflow_dispatch:
@@ -6,8 +6,8 @@ on:
     - cron: '5 15 * * *'
 
 jobs:
-  scrape-and-store:
-    name: Highscores Scrape + DB insert
+  daily:
+    name: DB init + Highscores + Online DB inserts
     runs-on: ubuntu-latest
     environment: dura-vault-scraper
 
@@ -41,7 +41,12 @@ jobs:
         env:
           NODE_ENV: production
 
-      - name: Execute Highscores Scraper
+      - name: Execute Highscores Scraper + DB inserts
         run: node dist/highscore/main.js
+        env:
+          NODE_ENV: production
+
+      - name: Execute Online DB inserts
+        run: node dist/online/online-data-insert.js
         env:
           NODE_ENV: production
