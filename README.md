@@ -309,6 +309,15 @@ Yes, just add the section in the configuration and the system will handle it aut
 
 The system checks for data from the previous day before calculating gains. If no data exists for yesterday, it will skip the gainers insert with a warning log.
 
+## ⏱️ Workflow Scheduling & Cron Jobs
+
+- **GitHub Actions for this project are managed externally via [cron-job.org](https://cron-job.org/).**
+- **Online-scraper process:** Runs every 10 minutes.
+- **Daily process:** Runs at 15:00 UTC. Scrapes highscores and inserts all the data on the DB.
+- **Check cron job status:** [https://2cdd12ry.status.cron-job.org/](https://2cdd12ry.status.cron-job.org/)
+
+---
+
 ## 📋 Requirements
 
 - Node.js 18+
