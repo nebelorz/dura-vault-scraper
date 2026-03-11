@@ -8,17 +8,17 @@
 
 This project uses Docker Compose to orchestrate both the PostgreSQL database and the scraper app. The scraper does NOT run automatically on container start—you trigger it manually for full control.
 
-| Step | Component                               | Description                       |
-| ---- | --------------------------------------- | --------------------------------- |
-| 1    | highscore/main.ts (daily EOD)           | Orchestrates scraping and DB      |
-| 2    | highscore/scraper/scraper.ts            | Scraper logic                     |
-| 3    | highscore/db/highscores-data-insert.ts  | Database logic                    |
-| 4    | temp_highscore_snapshots (DB)           | Stores raw snapshots              |
-| 5    | highscore_top (DB)                      | Stores daily top gainers          |
-| 6    | online/main.ts (every 15 min)           | Scrapes and upserts online data   |
-| 7    | online/online-data-insert.ts (EOD)      | Inserts top 100 + truncates temp  |
-| 8    | temp_online_snapshots (DB)              | Accumulates online time per day   |
-| 9    | online_top (DB)                         | Stores daily top 100 online       |
+| Step | Component                              | Description                      |
+| ---- | -------------------------------------- | -------------------------------- |
+| 1    | highscore/main.ts (daily EOD)          | Orchestrates scraping and DB     |
+| 2    | highscore/scraper/scraper.ts           | Scraper logic                    |
+| 3    | highscore/db/highscores-data-insert.ts | Database logic                   |
+| 4    | temp_highscore_snapshots (DB)          | Stores raw snapshots             |
+| 5    | highscore_top (DB)                     | Stores daily top gainers         |
+| 6    | online/main.ts (every 15 min)          | Scrapes and upserts online data  |
+| 7    | online/online-data-insert.ts (EOD)     | Inserts top 100 + truncates temp |
+| 8    | temp_online_snapshots (DB)             | Accumulates online time per day  |
+| 9    | online_top (DB)                        | Stores daily top 100 online      |
 
 Flow: **highscore/main.ts → mainHighscoresScraper → mainHighscoresDb → temp_highscore_snapshots → highscore_top**
 

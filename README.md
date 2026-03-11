@@ -96,16 +96,16 @@ src/online/online-data-insert.ts (daily EOD entrypoint)
 
 ### temp_online_snapshots
 
-| Column        | Type        | Description                              |
-| ------------- | ----------- | ---------------------------------------- |
-| id            | SERIAL PK   | Unique identifier                        |
-| scrape_date   | DATE        | Snapshot date                            |
-| name          | VARCHAR     | Character name                           |
-| level         | INT         | Character's current level                |
-| vocation      | VARCHAR     | Character vocation                       |
-| online_time   | INT         | Accumulated online minutes today         |
-| first_seen_at | TIMESTAMPTZ | UTC timestamp of first online detection  |
-| last_seen_at  | TIMESTAMPTZ | UTC timestamp of last online detection   |
+| Column        | Type        | Description                             |
+| ------------- | ----------- | --------------------------------------- |
+| id            | SERIAL PK   | Unique identifier                       |
+| scrape_date   | DATE        | Snapshot date                           |
+| name          | VARCHAR     | Character name                          |
+| level         | INT         | Character's current level               |
+| vocation      | VARCHAR     | Character vocation                      |
+| online_time   | INT         | Accumulated online minutes today        |
+| first_seen_at | TIMESTAMPTZ | UTC timestamp of first online detection |
+| last_seen_at  | TIMESTAMPTZ | UTC timestamp of last online detection  |
 
 **UNIQUE:** (scrape_date, name)
 
@@ -117,10 +117,10 @@ Same structure as `temp_online_snapshots`. Contains the top 100 players by `onli
 
 ### online_scraper_metadata
 
-| Column      | Type        | Description                          |
-| ----------- | ----------- | ------------------------------------ |
-| id          | INT PK      | Always 1 (single-row table)          |
-| last_run_at | TIMESTAMPTZ | UTC timestamp of last scraper run    |
+| Column      | Type        | Description                       |
+| ----------- | ----------- | --------------------------------- |
+| id          | INT PK      | Always 1 (single-row table)       |
+| last_run_at | TIMESTAMPTZ | UTC timestamp of last scraper run |
 
 Used to calculate the real delta between scraper executions.
 
@@ -190,30 +190,30 @@ npm run start:online:insert-on-db
 
 ## 🧩 Project Structure
 
-| Folder/File                                   | Description                                   |
-| --------------------------------------------- | --------------------------------------------- |
-| src/                                          | Main source code                              |
-| src/highscore/main.ts                         | Highscores entrypoint (daily EOD)             |
-| src/highscore/config.ts                       | Highscore-specific configuration              |
-| src/highscore/scraper/scraper.ts              | Scraping and parsing orchestration            |
-| src/highscore/scraper/parse.ts                | HTML parsing logic                            |
-| src/highscore/db/repository.ts                | DB queries and inserts                        |
-| src/highscore/db/highscores-data-insert.ts    | DB insert orchestration                       |
-| src/highscore/types/                          | TypeScript types for highscore feature        |
-| src/online/main.ts                            | Online scraper entrypoint (every 15 min)      |
-| src/online/online-data-insert.ts              | Online EOD entrypoint (top 100 + truncate)    |
-| src/online/config.ts                          | Online-specific configuration                 |
-| src/online/scraper/scraper.ts                 | Online scraper orchestration                  |
-| src/online/scraper/parse.ts                   | Online HTML parsing logic                     |
-| src/online/db/repository.ts                   | Online DB queries and upserts                 |
-| src/online/db/schema.ts                       | Online table SQL definitions                  |
-| src/online/types/                             | TypeScript types for online feature           |
-| src/db/config.ts                              | Shared DB connection config                   |
-| src/db/pool.ts                                | Shared PostgreSQL pool                        |
-| src/db/init-db.ts                             | Database initialization script                |
-| src/utils/                                    | Shared utilities (fetch-html, logger)         |
-| .github/workflows/daily.yml                   | Daily workflow (highscores + online EOD)      |
-| .github/workflows/online-scraper.yml          | 15-min workflow (online players scrape)       |
+| Folder/File                                | Description                                |
+| ------------------------------------------ | ------------------------------------------ |
+| src/                                       | Main source code                           |
+| src/highscore/main.ts                      | Highscores entrypoint (daily EOD)          |
+| src/highscore/config.ts                    | Highscore-specific configuration           |
+| src/highscore/scraper/scraper.ts           | Scraping and parsing orchestration         |
+| src/highscore/scraper/parse.ts             | HTML parsing logic                         |
+| src/highscore/db/repository.ts             | DB queries and inserts                     |
+| src/highscore/db/highscores-data-insert.ts | DB insert orchestration                    |
+| src/highscore/types/                       | TypeScript types for highscore feature     |
+| src/online/main.ts                         | Online scraper entrypoint (every 15 min)   |
+| src/online/online-data-insert.ts           | Online EOD entrypoint (top 100 + truncate) |
+| src/online/config.ts                       | Online-specific configuration              |
+| src/online/scraper/scraper.ts              | Online scraper orchestration               |
+| src/online/scraper/parse.ts                | Online HTML parsing logic                  |
+| src/online/db/repository.ts                | Online DB queries and upserts              |
+| src/online/db/schema.ts                    | Online table SQL definitions               |
+| src/online/types/                          | TypeScript types for online feature        |
+| src/db/config.ts                           | Shared DB connection config                |
+| src/db/pool.ts                             | Shared PostgreSQL pool                     |
+| src/db/init-db.ts                          | Database initialization script             |
+| src/utils/                                 | Shared utilities (fetch-html, logger)      |
+| .github/workflows/daily.yml                | Daily workflow (highscores + online EOD)   |
+| .github/workflows/online-scraper.yml       | 15-min workflow (online players scrape)    |
 
 ---
 
