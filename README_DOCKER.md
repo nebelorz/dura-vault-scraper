@@ -8,13 +8,17 @@
 
 This project uses Docker Compose to orchestrate both the PostgreSQL database and the scraper app. The scraper does NOT run automatically on container start—you trigger it manually for full control.
 
-| Step | Component                     | Description                  |
-| ---- | ----------------------------- | ---------------------------- |
-| 1    | highscore/main.ts (manual)             | Orchestrates scraping and DB |
-| 2    | highscore/scraper/scraper.ts           | Scraper logic                |
-| 3    | highscore/db/main-highscores-db.ts     | Database logic               |
-| 4    | temp_highscore_snapshots (DB) | Stores raw snapshots         |
-| 5    | highscore_top (DB)            | Stores daily top gainers  |
+| Step | Component                               | Description                       |
+| ---- | --------------------------------------- | --------------------------------- |
+| 1    | highscore/main.ts (daily EOD)           | Orchestrates scraping and DB      |
+| 2    | highscore/scraper/scraper.ts            | Scraper logic                     |
+| 3    | highscore/db/highscores-data-insert.ts  | Database logic                    |
+| 4    | temp_highscore_snapshots (DB)           | Stores raw snapshots              |
+| 5    | highscore_top (DB)                      | Stores daily top gainers          |
+| 6    | online/main.ts (every 15 min)           | Scrapes and upserts online data   |
+| 7    | online/online-data-insert.ts (EOD)      | Inserts top 100 + truncates temp  |
+| 8    | temp_online_snapshots (DB)              | Accumulates online time per day   |
+| 9    | online_top (DB)                         | Stores daily top 100 online       |
 
 Flow: **highscore/main.ts → mainHighscoresScraper → mainHighscoresDb → temp_highscore_snapshots → highscore_top**
 
@@ -46,13 +50,27 @@ This will:
 **Run compiled JavaScript:**
 
 ```sh
+# Highscores (daily EOD)
 docker-compose run --rm scraper node dist/highscore/main.js
+
+# Online scraper (15-min tick)
+docker-compose run --rm scraper node dist/online/main.js
+
+# Online EOD (top 100 + truncate temp)
+docker-compose run --rm scraper node dist/online/online-data-insert.js
 ```
 
 **Run TypeScript directly (for development/debug):**
 
 ```sh
+# Highscores
 docker-compose run --rm scraper npx ts-node src/highscore/main.ts
+
+# Online scraper
+docker-compose run --rm scraper npx ts-node src/online/main.ts
+
+# Online EOD
+docker-compose run --rm scraper npx ts-node src/online/online-data-insert.ts
 ```
 
 ### 3. View scraper logs
@@ -140,14 +158,17 @@ Define these in your `.env` file:
 - `PGDATABASE` - Database name
 - `HIGHSCORES_SCRAPER_BASE_URL` - Base URL for highscores scraping
 - `HIGHSCORES_SCRAPER_PAGES_TO_SCRAP` - Number of pages to scrape
+- `ONLINE_SCRAPER_URL` - Full URL of the online players page
 
 ---
 
 ## 🧩 Typical Workflow
 
 1. `docker-compose up --build` (start DB and scraper container)
-2. `docker-compose run --rm scraper node dist/highscore/main.js` (run the scraper)
-3. Check logs, query the database, repeat as needed
+2. `docker-compose run --rm scraper node dist/highscore/main.js` (run highscores)
+3. `docker-compose run --rm scraper node dist/online/main.js` (run online tick)
+4. `docker-compose run --rm scraper node dist/online/online-data-insert.js` (run online EOD)
+5. Check logs, query the database, repeat as needed
 
 ---
 
