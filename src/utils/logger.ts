@@ -17,7 +17,7 @@ function formatMessage(level: LogLevel, message: string): string {
  * Logs a section message to the console.
  */
 export function section(message: string, ...args: any[]): void {
-  console.log(`\n${formatMessage(LogLevel.INFO, '• ' + message)}`, ...args);
+  console.log(`\n${formatMessage(LogLevel.INFO, '>> ' + message)}`, ...args);
 }
 
 /**

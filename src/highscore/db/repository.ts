@@ -14,12 +14,14 @@ export async function removeOldSnapshotsFromTempHighscoreSnapshotTable(): Promis
       "DELETE FROM temp_highscore_snapshots WHERE scrape_date < CURRENT_DATE - INTERVAL '1 day'";
     const result = await client.query(query);
     if (result.rowCount === 0) {
-      logger.info('No old records found to remove from temp_highscore_snapshots.');
+      logger.info('[HIGHSCORE] No old records found to remove from temp_highscore_snapshots.');
     } else {
-      logger.info(`Cleaned up ${result.rowCount} old records from temp_highscore_snapshots.`);
+      logger.info(
+        `[HIGHSCORE] Cleaned up ${result.rowCount} old records from temp_highscore_snapshots.`,
+      );
     }
   } catch (error) {
-    logger.error('Error removing old temp snapshots:', error);
+    logger.error('[HIGHSCORE] Error removing old temp snapshots:', error);
     throw error;
   } finally {
     client.release();
@@ -32,7 +34,7 @@ export async function insertTempHighscoreSnapshots(
   scrapeDate: Date = new Date(),
 ): Promise<void> {
   if (entries.length === 0) {
-    logger.warn(`No entries to insert for section '${section}'`);
+    logger.info(`[HIGHSCORE] No entries to insert for section '${section}'`);
     return;
   }
   const client = await pool.connect();
@@ -67,16 +69,19 @@ export async function insertTempHighscoreSnapshots(
     const insertedCount = result.rowCount || 0;
     if (insertedCount === 0) {
       logger.info(
-        `No new records to insert received from the scraping process for section '${section}' on ${dateStr}.`,
+        `[HIGHSCORE] No new records to insert received from the scraping process for section '${section}' on ${dateStr}.`,
       );
     } else {
       logger.info(
-        `Inserted ${insertedCount}/${entries.length} records for '${section}' on ${dateStr}`,
+        `[HIGHSCORE] Inserted ${insertedCount}/${entries.length} records for '${section}' on ${dateStr}`,
       );
     }
   } catch (error) {
     await client.query('ROLLBACK');
-    logger.error(`Database error while inserting '${section}' highscore snapshots:`, error);
+    logger.error(
+      `[HIGHSCORE] Database error while inserting '${section}' highscore snapshots:`,
+      error,
+    );
     throw error;
   } finally {
     client.release();
@@ -139,8 +144,8 @@ export async function insertTopGainers(
       'SELECT 1 FROM temp_highscore_snapshots WHERE scrape_date = $1 AND section = $2 LIMIT 1;';
     const checkResult = await client.query(checkQuery, [yesterdayStr, 'experience']);
     if (checkResult.rowCount === 0) {
-      logger.warn(
-        `No data for section 'experience' on previous day (${yesterdayStr}). Skipping top gainers insert for ${todayStr}.`,
+      logger.info(
+        `[HIGHSCORE] No data for section 'experience' on previous day (${yesterdayStr}). Skipping top gainers insert for ${todayStr}.`,
       );
       return;
     }
@@ -175,13 +180,13 @@ export async function insertTopGainers(
     if (gainsRows.length > 0) {
       await insertTopGainersRows(client, gainsRows, 'experience', todayStr);
       logger.info(
-        `Inserted ${gainsRows.length} top gainers for section 'experience' on ${todayStr}`,
+        `[HIGHSCORE] Inserted ${gainsRows.length} top gainers for section 'experience' on ${todayStr}`,
       );
     } else {
-      logger.info(`No top gainers for section 'experience' on ${todayStr}`);
+      logger.info(`[HIGHSCORE] No top gainers for section 'experience' on ${todayStr}`);
     }
   } catch (error) {
-    logger.error('Error inserting top gainers for section experience:', error);
+    logger.error("[HIGHSCORE] Error inserting top gainers for section 'experience':", error);
     throw error;
   } finally {
     client.release();
@@ -206,7 +211,7 @@ export async function insertTopSkillGainers(
     const checkResult = await client.query(checkQuery, [yesterdayStr, section]);
     if (checkResult.rowCount === 0) {
       logger.warn(
-        `No data for section '${section}' on previous day (${yesterdayStr}). Skipping top skill gainers insert for ${todayStr}.`,
+        `[HIGHSCORE] No data for section '${section}' on previous day (${yesterdayStr}). Skipping top skill gainers insert for ${todayStr}.`,
       );
       return;
     }
@@ -241,13 +246,13 @@ export async function insertTopSkillGainers(
     if (gainsRows.length > 0) {
       await insertTopGainersRows(client, gainsRows, section, todayStr);
       logger.info(
-        `Inserted ${gainsRows.length} top skill gainers for section '${section}' on ${todayStr}`,
+        `[HIGHSCORE] Inserted ${gainsRows.length} top skill gainers for section '${section}' on ${todayStr}`,
       );
     } else {
-      logger.info(`No top skill gainers for section '${section}' on ${todayStr}`);
+      logger.info(`[HIGHSCORE] No top skill gainers for section '${section}' on ${todayStr}`);
     }
   } catch (error) {
-    logger.error(`Error inserting top skill gainers for section '${section}':`, error);
+    logger.error(`[HIGHSCORE] Error inserting top skill gainers for section '${section}':`, error);
     throw error;
   } finally {
     client.release();
@@ -269,7 +274,7 @@ export async function insertExperienceLosses(
     const checkResult = await client.query(checkQuery, [yesterdayStr, 'experience']);
     if (checkResult.rowCount === 0) {
       logger.warn(
-        `No data for section 'experience' on previous day (${yesterdayStr}). Skipping experience losses insert for ${todayStr}.`,
+        `[HIGHSCORE] No data for section 'experience' on previous day (${yesterdayStr}). Skipping experience losses insert for ${todayStr}.`,
       );
       return;
     }
@@ -304,13 +309,13 @@ export async function insertExperienceLosses(
     if (lossesRows.length > 0) {
       await insertTopGainersRows(client, lossesRows, 'experience_loss', todayStr);
       logger.info(
-        `Inserted ${lossesRows.length} experience losses in 'experience_loss' section on ${todayStr}`,
+        `[HIGHSCORE] Inserted ${lossesRows.length} experience losses in 'experience_loss' section on ${todayStr}`,
       );
     } else {
-      logger.info(`No experience losses on ${todayStr}`);
+      logger.info(`[HIGHSCORE] No experience losses on ${todayStr}`);
     }
   } catch (error) {
-    logger.error('Error inserting experience losses:', error);
+    logger.error('[HIGHSCORE] Error inserting experience losses:', error);
     throw error;
   } finally {
     client.release();

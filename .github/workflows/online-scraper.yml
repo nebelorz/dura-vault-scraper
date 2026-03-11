@@ -1,0 +1,41 @@
+name: Dura Vault - Online Scraper
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *'
+
+jobs:
+  scrape-online:
+    name: Online Players Scrape
+    runs-on: ubuntu-latest
+    environment: dura-vault-scraper
+
+    env:
+      PGHOST: ${{ secrets.PGHOST }}
+      PGUSER: ${{ secrets.PGUSER }}
+      PGPASSWORD: ${{ secrets.PGPASSWORD }}
+      PGDATABASE: ${{ secrets.PGDATABASE }}
+      PGPORT: ${{ secrets.PGPORT }}
+      ONLINE_SCRAPER_URL: ${{ vars.ONLINE_SCRAPER_URL }}
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies (npm ci)
+        run: npm ci
+
+      - name: Build TS project
+        run: npm run build
+
+      - name: Execute Online Scraper
+        run: node dist/online/main.js
+        env:
+          NODE_ENV: production

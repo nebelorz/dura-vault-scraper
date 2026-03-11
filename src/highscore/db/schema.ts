@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS temp_highscore_snapshots (
 );
 `;
 
-export const queryCreateIndexes = `
+export const queryCreateHighscoreIndexes = `
 CREATE INDEX IF NOT EXISTS idx_top_name_section_date
 	ON highscore_top (name, section, scrape_date);
 CREATE INDEX IF NOT EXISTS idx_top_section_date

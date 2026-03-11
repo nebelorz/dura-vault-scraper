@@ -1,12 +1,12 @@
 # Dura Vault Scraper
 
-> A robust, type-safe Node.js + TypeScript scraper for Dura Vault highscores, with PostgreSQL persistence and modern tooling.
+> A robust, type-safe Node.js + TypeScript scraper for Dura Vault highscores and online players, with PostgreSQL persistence and modern tooling.
 
 ---
 
 ## 🚀 What does this project do?
 
-Dura Vault Scraper automates the daily download of Dura Vault highscores, stores historical snapshots, and calculates top gainers and losses for each section, all in a PostgreSQL database optimized for queries and analysis.
+Dura Vault Scraper automates the daily download of Dura Vault highscores and tracks which players are online throughout the day, storing historical snapshots and calculating top gainers, losses, and most active online players, all in a PostgreSQL database optimized for queries and analysis.
 
 **Key Features:**
 
@@ -15,10 +15,15 @@ Dura Vault Scraper automates the daily download of Dura Vault highscores, stores
 - ✅ Skill gains tracking (level-based: magic, fishing, shield, etc.)
 - ✅ Historical snapshots retention
 - ✅ Automatic rank and position changes calculation
+- ✅ Online players tracking every 15 minutes
+- ✅ Accurate online time accumulation (delta-based, drift-proof)
+- ✅ Daily top 100 most active online players
 
 ---
 
 ## 🗺️ Architecture & Data Flow
+
+### Highscores (daily)
 
 ```
 src/highscore/main.ts (entrypoint)
@@ -27,7 +32,7 @@ src/highscore/main.ts (entrypoint)
 mainHighscoresScraper (highscore/scraper/scraper.ts)
   |
   v
-mainHighscoresDb (highscore/db/main-highscores-db.ts)
+highscoresDataInsert (highscore/db/highscores-data-insert.ts)
   |
   +----> insertTempHighscoreSnapshots()
   |      └─> temp_highscore_snapshots (raw daily data)
@@ -42,6 +47,26 @@ mainHighscoresDb (highscore/db/main-highscores-db.ts)
          └─> experience_loss section (points < 0)
 
 Final: highscore_top table contains all top gainers + losses
+```
+
+### Online players (every 15 min + daily EOD)
+
+```
+src/online/main.ts (15-min entrypoint)
+  |
+  v
+mainOnlineScraper (online/scraper/scraper.ts)
+  |
+  v
+upsertOnlineSnapshots (online/db/repository.ts)
+  └─> temp_online_snapshots (UPSERT — accumulates online_time)
+      - delta calculated from online_scraper_metadata.last_run_at
+      - cap of 20 min to avoid gaps from reconnecting players
+
+src/online/online-data-insert.ts (daily EOD entrypoint)
+  |
+  +----> insertOnlineTop()    → online_top (top 100 by online_time)
+  +----> truncateTempOnlineSnapshots() → clears temp table
 ```
 
 **Data Types:**
@@ -68,6 +93,36 @@ Final: highscore_top table contains all top gainers + losses
 | rank        | INT       | Global rank in official highscores  |
 
 **UNIQUE:** (scrape_date, section, name)
+
+### temp_online_snapshots
+
+| Column        | Type        | Description                             |
+| ------------- | ----------- | --------------------------------------- |
+| id            | SERIAL PK   | Unique identifier                       |
+| scrape_date   | DATE        | Snapshot date                           |
+| name          | VARCHAR     | Character name                          |
+| level         | INT         | Character's current level               |
+| vocation      | VARCHAR     | Character vocation                      |
+| online_time   | INT         | Accumulated online minutes today        |
+| first_seen_at | TIMESTAMPTZ | UTC timestamp of first online detection |
+| last_seen_at  | TIMESTAMPTZ | UTC timestamp of last online detection  |
+
+**UNIQUE:** (scrape_date, name)
+
+### online_top
+
+Same structure as `temp_online_snapshots`. Contains the top 100 players by `online_time` per day, inserted at EOD.
+
+**UNIQUE:** (scrape_date, name)
+
+### online_scraper_metadata
+
+| Column      | Type        | Description                       |
+| ----------- | ----------- | --------------------------------- |
+| id          | INT PK      | Always 1 (single-row table)       |
+| last_run_at | TIMESTAMPTZ | UTC timestamp of last scraper run |
+
+Used to calculate the real delta between scraper executions.
 
 ### highscore_top
 
@@ -104,6 +159,7 @@ Create a `.env` file in the project root:
 ```env
 HIGHSCORES_SCRAPER_BASE_URL=https://example.com
 HIGHSCORES_SCRAPER_PAGES_TO_SCRAP=5
+ONLINE_SCRAPER_URL=https://example.com/?online
 PGHOST=localhost
 PGUSER=youruser
 PGPASSWORD=yourpassword
@@ -117,32 +173,47 @@ PGPORT=5432
 npm run start:db
 ```
 
-### 4. Run the scraper
+### 4. Run the scrapers
 
 ```sh
-npm run start:scrape:highscores
+# Highscores (daily EOD)
+npm run start:highscores:scrape
+
+# Online players (every 15 min)
+npm run start:online:scrape
+
+# Online EOD — insert top 100 + truncate temp (daily EOD)
+npm run start:online:insert-on-db
 ```
 
 ---
 
 ## 🧩 Project Structure
 
-| Folder/File                            | Description                              |
-| -------------------------------------- | ---------------------------------------- |
-| src/                                   | Main source code                         |
-| src/highscore/main.ts                  | Entrypoint, orchestrates scraper and DB  |
-| src/highscore/config.ts                | Highscore-specific configuration         |
-| src/highscore/scraper/scraper.ts       | Scraping and parsing orchestration       |
-| src/highscore/scraper/parse.ts         | HTML parsing logic                       |
-| src/highscore/db/repository.ts         | DB queries and inserts                   |
-| src/highscore/db/main-highscores-db.ts | DB insert orchestration                  |
-| src/highscore/types/                   | TypeScript types for highscore feature   |
-| src/db/config.ts                       | Shared DB connection config              |
-| src/db/pool.ts                         | Shared PostgreSQL pool                   |
-| src/db/init-db.ts                      | Database initialization script           |
-| src/utils/                             | Shared utilities (fetch-html, logger)    |
-| dist/                                  | Compiled output                          |
-| .env                                   | Environment variables                    |
+| Folder/File                                | Description                                |
+| ------------------------------------------ | ------------------------------------------ |
+| src/                                       | Main source code                           |
+| src/highscore/main.ts                      | Highscores entrypoint (daily EOD)          |
+| src/highscore/config.ts                    | Highscore-specific configuration           |
+| src/highscore/scraper/scraper.ts           | Scraping and parsing orchestration         |
+| src/highscore/scraper/parse.ts             | HTML parsing logic                         |
+| src/highscore/db/repository.ts             | DB queries and inserts                     |
+| src/highscore/db/highscores-data-insert.ts | DB insert orchestration                    |
+| src/highscore/types/                       | TypeScript types for highscore feature     |
+| src/online/main.ts                         | Online scraper entrypoint (every 15 min)   |
+| src/online/online-data-insert.ts           | Online EOD entrypoint (top 100 + truncate) |
+| src/online/config.ts                       | Online-specific configuration              |
+| src/online/scraper/scraper.ts              | Online scraper orchestration               |
+| src/online/scraper/parse.ts                | Online HTML parsing logic                  |
+| src/online/db/repository.ts                | Online DB queries and upserts              |
+| src/online/db/schema.ts                    | Online table SQL definitions               |
+| src/online/types/                          | TypeScript types for online feature        |
+| src/db/config.ts                           | Shared DB connection config                |
+| src/db/pool.ts                             | Shared PostgreSQL pool                     |
+| src/db/init-db.ts                          | Database initialization script             |
+| src/utils/                                 | Shared utilities (fetch-html, logger)      |
+| .github/workflows/daily.yml                | Daily workflow (highscores + online EOD)   |
+| .github/workflows/online-scraper.yml       | 15-min workflow (online players scrape)    |
 
 ---
 
@@ -196,10 +267,17 @@ npm run eslint
 npm run start:db
 ```
 
-### Run the scraper and database logic
+### Run the scrapers
 
 ```sh
-npm run start:scrape:highscores
+# Highscores
+npm run start:highscores:scrape
+
+# Online players (15-min tick)
+npm run start:online:scrape
+
+# Online EOD (top 100 + truncate temp)
+npm run start:online:insert-on-db
 ```
 
 ---
