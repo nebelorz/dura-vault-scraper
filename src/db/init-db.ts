@@ -3,9 +3,15 @@ import { dbConfig } from './config';
 import { logger } from '../utils/logger';
 import {
   queryCreateTempHighscoreSnapshotsTable,
-  queryCreateIndexes,
+  queryCreateHighscoreIndexes,
   queryCreateTopHighscoreTable,
 } from '../highscore/db/schema';
+import {
+  queryCreateTempOnlineSnapshotsTable,
+  queryCreateOnlineTopTable,
+  queryCreateOnlineIndexes,
+  queryCreateOnlineScraperMetadataTable,
+} from '../online/db/schema';
 import {
   removeOldSnapshotsFromTempHighscoreSnapshotTable,
   closePool,
@@ -20,30 +26,49 @@ async function main() {
       `Connected to PostgreSQL (${dbConfig.host}:${dbConfig.port}) - (${dbConfig.database})`,
     );
 
-    logger.section('Creating tables if doesnt exist...');
+    // |||||||||||||||||||
+    // || CREATE TABLES ||
+    // |||||||||||||||||||
+    logger.section('Creating tables if needed...');
 
-    // Highscore tables
-    await client.query(queryCreateTempHighscoreSnapshotsTable);
-    logger.info('Table temp_highscore_snapshots OK');
+    // Highscore
     await client.query(queryCreateTopHighscoreTable);
-    logger.info('Table highscore_top OK');
+    logger.info('[HIGHSCORE] Table highscore_top OK');
+    await client.query(queryCreateTempHighscoreSnapshotsTable);
+    logger.info('[HIGHSCORE] Table temp_highscore_snapshots OK');
 
-    // Highscore indexes
-    logger.section('Creating indexes if doesnt exist...');
-    await client.query(queryCreateIndexes);
-    logger.info('Indexes OK');
+    // Online
+    await client.query(queryCreateOnlineTopTable);
+    logger.info('[ONLINE] Table online_top OK');
+    await client.query(queryCreateTempOnlineSnapshotsTable);
+    logger.info('[ONLINE] Table temp_online_snapshots OK');
+    await client.query(queryCreateOnlineScraperMetadataTable);
+    logger.info('[ONLINE] Table online_scraper_metadata OK');
 
-    // Highscore cleanup
+    // ||||||||||||||||||||
+    // || CREATE INDEXES ||
+    // ||||||||||||||||||||
+    logger.section('Creating indexes if needed...');
+
+    // Highscore
+    await client.query(queryCreateHighscoreIndexes);
+    logger.info('[HIGHSCORE] Indexes OK');
+
+    // Online
+    await client.query(queryCreateOnlineIndexes);
+    logger.info('[ONLINE] Indexes OK');
+
+    // ||||||||||||||
+    // || CLEAN-UP ||
+    // ||||||||||||||
     logger.section('Deleting old data if needed...');
+
+    // Highscore
     await removeOldSnapshotsFromTempHighscoreSnapshotTable();
-
-    // Online tables (TBD)
-    // ...
-
-    logger.section('Database initialization completed');
   } catch (err) {
     throw new Error('Database initialization failed', { cause: err });
   } finally {
+    logger.section('Database initialization completed');
     await client.end();
     await closePool();
   }
