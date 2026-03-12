@@ -6,14 +6,18 @@ const MAX_TICK_MINUTES = 60;
 
 async function getAndUpdateLastRunAt(client: any): Promise<number> {
   const result = await client.query(`
-    UPDATE online_scraper_metadata
-    SET last_run_at = NOW()
-    WHERE id = 1
-    RETURNING
+    WITH old AS (
+      SELECT last_run_at FROM online_scraper_metadata WHERE id = 1
+    ),
+    upd AS (
+      UPDATE online_scraper_metadata SET last_run_at = NOW() WHERE id = 1
+    )
+    SELECT
       CASE
-        WHEN last_run_at IS NULL THEN 0
-        ELSE ROUND(EXTRACT(EPOCH FROM (NOW() - last_run_at)) / 60)::int
+        WHEN old.last_run_at IS NULL THEN 0
+        ELSE ROUND(EXTRACT(EPOCH FROM (NOW() - old.last_run_at)) / 60)::int
       END AS delta_minutes
+    FROM old
   `);
 
   const delta: number = result.rows[0]?.delta_minutes ?? 0;
