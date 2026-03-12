@@ -2,20 +2,22 @@ import { pool } from '../../db/pool';
 import { logger } from '../../utils/logger';
 import type { OnlineEntry } from '../types';
 
-const MAX_TICK_MINUTES = 20;
+const MAX_TICK_MINUTES = 60;
 
 async function getAndUpdateLastRunAt(client: any): Promise<number> {
-  const selectResult = await client.query(
-    'SELECT last_run_at FROM online_scraper_metadata WHERE id = 1',
-  );
-  const lastRunAt: Date | null = selectResult.rows[0]?.last_run_at ?? null;
+  const result = await client.query(`
+    UPDATE online_scraper_metadata
+    SET last_run_at = NOW()
+    WHERE id = 1
+    RETURNING
+      CASE
+        WHEN last_run_at IS NULL THEN 0
+        ELSE ROUND(EXTRACT(EPOCH FROM (NOW() - last_run_at)) / 60)::int
+      END AS delta_minutes
+  `);
 
-  await client.query('UPDATE online_scraper_metadata SET last_run_at = NOW() WHERE id = 1');
-
-  if (!lastRunAt) return 0;
-
-  const deltaMinutes = Math.round((Date.now() - lastRunAt.getTime()) / 60000);
-  return Math.min(deltaMinutes, MAX_TICK_MINUTES);
+  const delta: number = result.rows[0]?.delta_minutes ?? 0;
+  return Math.min(delta, MAX_TICK_MINUTES);
 }
 
 export async function upsertOnlineSnapshots(entries: OnlineEntry[]): Promise<void> {
