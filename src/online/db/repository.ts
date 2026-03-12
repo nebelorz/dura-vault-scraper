@@ -18,10 +18,7 @@ async function getAndUpdateLastRunAt(client: any): Promise<number> {
   return Math.min(deltaMinutes, MAX_TICK_MINUTES);
 }
 
-export async function upsertOnlineSnapshots(
-  entries: OnlineEntry[],
-  scrapeDate: Date = new Date(),
-): Promise<void> {
+export async function upsertOnlineSnapshots(entries: OnlineEntry[]): Promise<void> {
   if (entries.length === 0) {
     logger.warn('[ONLINE] No entries to upsert');
     return;
@@ -31,7 +28,6 @@ export async function upsertOnlineSnapshots(
   try {
     await client.query('BEGIN');
 
-    const dateStr = scrapeDate.toISOString().split('T')[0];
     const delta = await getAndUpdateLastRunAt(client);
     const values: any[] = [];
     const placeholders: string[] = [];
@@ -39,17 +35,17 @@ export async function upsertOnlineSnapshots(
 
     for (const entry of entries) {
       placeholders.push(
-        `($${paramIndex}::date, $${paramIndex + 1}::varchar, $${paramIndex + 2}::integer, $${paramIndex + 3}::varchar)`,
+        `($${paramIndex}::varchar, $${paramIndex + 1}::integer, $${paramIndex + 2}::varchar)`,
       );
-      values.push(dateStr, entry.name, entry.level, entry.vocation);
-      paramIndex += 4;
+      values.push(entry.name, entry.level, entry.vocation);
+      paramIndex += 3;
     }
 
     const upsertQuery = `
-      INSERT INTO temp_online_snapshots (scrape_date, name, level, vocation, online_time, first_seen_at, last_seen_at)
-      SELECT v.scrape_date, v.name, v.level, v.vocation, 0, DATE_TRUNC('minute', NOW()), DATE_TRUNC('minute', NOW())
-      FROM (VALUES ${placeholders.join(', ')}) AS v(scrape_date, name, level, vocation)
-      ON CONFLICT (scrape_date, name) DO UPDATE SET
+      INSERT INTO temp_online_snapshots (name, level, vocation, online_time, first_seen_at, last_seen_at)
+      SELECT v.name, v.level, v.vocation, 0, DATE_TRUNC('minute', NOW()), DATE_TRUNC('minute', NOW())
+      FROM (VALUES ${placeholders.join(', ')}) AS v(name, level, vocation)
+      ON CONFLICT (name) DO UPDATE SET
         online_time = temp_online_snapshots.online_time + $${paramIndex}::integer,
         level = EXCLUDED.level,
         vocation = EXCLUDED.vocation,
@@ -60,8 +56,10 @@ export async function upsertOnlineSnapshots(
     const result = await client.query(upsertQuery, values);
     await client.query('COMMIT');
 
-    const timeStr = scrapeDate.toTimeString().slice(0, 5);
-    logger.info(`[ONLINE] Upserted ${result.rowCount} records for ${dateStr} ${timeStr}`);
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toTimeString().slice(0, 5);
+    logger.info(`[ONLINE] Upserted ${result.rowCount} records at ${dateStr} ${timeStr}`);
   } catch (error) {
     await client.query('ROLLBACK');
     logger.error('[ONLINE] Database error during upsert:', error);
@@ -78,10 +76,7 @@ export async function insertOnlineTop(scrapeDate: Date = new Date()): Promise<vo
   try {
     await client.query('BEGIN');
 
-    const checkResult = await client.query(
-      'SELECT 1 FROM temp_online_snapshots WHERE scrape_date = $1 LIMIT 1',
-      [dateStr],
-    );
+    const checkResult = await client.query('SELECT 1 FROM temp_online_snapshots LIMIT 1');
     if (checkResult.rowCount === 0) {
       logger.warn(
         `[ONLINE] No data in temp_online_snapshots for ${dateStr}. Skipping online-data-insert.`,
@@ -92,9 +87,8 @@ export async function insertOnlineTop(scrapeDate: Date = new Date()): Promise<vo
 
     const insertQuery = `
       INSERT INTO online_top (scrape_date, name, level, vocation, online_time, first_seen_at, last_seen_at)
-      SELECT scrape_date, name, level, vocation, online_time, first_seen_at, last_seen_at
+      SELECT $1::date, name, level, vocation, online_time, first_seen_at, last_seen_at
       FROM temp_online_snapshots
-      WHERE scrape_date = $1
       ORDER BY online_time DESC
       LIMIT 100
       ON CONFLICT (scrape_date, name) DO NOTHING

@@ -1,14 +1,13 @@
 export const queryCreateTempOnlineSnapshotsTable = `
 CREATE TABLE IF NOT EXISTS temp_online_snapshots (
 	id SERIAL PRIMARY KEY,
-	scrape_date DATE NOT NULL,
 	name VARCHAR(50) NOT NULL,
 	level INT NOT NULL,
 	vocation VARCHAR(30) NOT NULL,
 	online_time INT NOT NULL DEFAULT 0,
 	first_seen_at TIMESTAMPTZ NOT NULL,
 	last_seen_at TIMESTAMPTZ NOT NULL,
-	UNIQUE (scrape_date, name)
+	UNIQUE (name)
 );
 `;
 
@@ -27,8 +26,6 @@ CREATE TABLE IF NOT EXISTS online_top (
 `;
 
 export const queryCreateOnlineIndexes = `
-CREATE INDEX IF NOT EXISTS idx_temp_online_date
-	ON temp_online_snapshots (scrape_date);
 CREATE INDEX IF NOT EXISTS idx_online_top_date
 	ON online_top (scrape_date);
 `;
