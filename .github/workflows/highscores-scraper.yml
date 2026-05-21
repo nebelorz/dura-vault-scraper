@@ -1,13 +1,18 @@
-name: Dura Vault - Daily
+name: Dura Vault - Highscores Scraper
 
 on:
   workflow_dispatch:
 
+concurrency:
+  group: highscores-scraper
+  cancel-in-progress: false
+
 jobs:
-  daily:
-    name: DB init + Highscores + Online DB inserts
+  highscores-scraper:
+    name: Highscores Scrape → temp_highscore_snapshots
     runs-on: ubuntu-latest
     environment: dura-vault-scraper
+    timeout-minutes: 20
 
     env:
       PGHOST: ${{ secrets.PGHOST }}
@@ -20,26 +25,20 @@ jobs:
       HIGHSCORES_SCRAPER_PAGES_TO_SCRAP: ${{ vars.HIGHSCORES_SCRAPER_PAGES_TO_SCRAP }}
 
     steps:
-      - name: Clone repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Node.JS
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: 'npm'
 
-      - name: Install dependencies (npm ci)
+      - name: Install dependencies
         run: npm ci
 
-      - name: Build TS project
+      - name: Build TypeScript
         run: npm run build
 
-      - name: Execute database initialization
-        run: node dist/db/init-db.js
-
-      - name: Execute Highscores Scraper + DB inserts
-        run: node dist/highscore/main.js
-
-      - name: Execute Online DB inserts
-        run: node dist/online/online-data-insert.js
+      - name: Run highscores scraper
+        run: node dist/highscore/highscores-scraper.js

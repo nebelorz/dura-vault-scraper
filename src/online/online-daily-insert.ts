@@ -5,12 +5,12 @@ import { logger } from '../utils/logger';
 async function main() {
   const today = new Date();
   try {
-    logger.section('Online data insert started');
+    logger.section('Online daily insert started');
     await insertOnlineTop(today);
     await truncateTempOnlineSnapshots();
-    logger.info('[ONLINE] Online data insert complete');
+    logger.info('[ONLINE] Daily insert complete');
   } catch (err) {
-    logger.error('[ONLINE] Fatal error during online data insert:', err);
+    logger.error('[ONLINE] Fatal error during daily insert:', err);
     process.exit(1);
   } finally {
     await closePool();
