@@ -1,91 +1,95 @@
-# Docker Guide for dura-vault-scraper
+# Docker Guide — dura-vault-scraper
 
-> **Run the Dura Vault Scraper and PostgreSQL database in containers for easy local development and production.**
+> Run the scraper and PostgreSQL database in isolated containers with full control over when each script runs.
 
 ---
 
-## 🐳 Overview & Architecture
+## Architecture
 
-This project uses Docker Compose to orchestrate both the PostgreSQL database and the scraper app. The scraper does NOT run automatically on container start—you trigger it manually for full control.
+Two containers, one network:
 
-| Step | Component                              | Description                      |
-| ---- | -------------------------------------- | -------------------------------- |
-| 1    | highscore/main.ts (daily EOD)          | Orchestrates scraping and DB     |
-| 2    | highscore/scraper/scraper.ts           | Scraper logic                    |
-| 3    | highscore/db/highscores-data-insert.ts | Database logic                   |
-| 4    | temp_highscore_snapshots (DB)          | Stores raw snapshots             |
-| 5    | highscore_top (DB)                     | Stores daily top gainers         |
-| 6    | online/main.ts (every 15 min)          | Scrapes and upserts online data  |
-| 7    | online/online-data-insert.ts (EOD)     | Inserts top 100 + truncates temp |
-| 8    | temp_online_snapshots (DB)             | Accumulates online time per day  |
-| 9    | online_top (DB)                        | Stores daily top 100 online      |
+```
+┌─────────────────────────────────────┐
+│         dura-vault-network          │
+│                                     │
+│  ┌──────────────┐  ┌─────────────┐  │
+│  │ dura-vault-db│  │dura-vault-  │  │
+│  │ postgres:15  │◄─│  scraper    │  │
+│  │ port 5432    │  │  node:24    │  │
+│  └──────────────┘  └─────────────┘  │
+└─────────────────────────────────────┘
+        │
+        └─► exposed to host at localhost:5432
+            (Beekeeper, psql, etc.)
+```
 
-Flow: **highscore/main.ts → mainHighscoresScraper → mainHighscoresDb → temp_highscore_snapshots → highscore_top**
+| Container            | Image                   | Role                                    |
+| -------------------- | ----------------------- | --------------------------------------- |
+| `dura-vault-db`      | `postgres:15-alpine`    | Stores all data persistently            |
+| `dura-vault-scraper` | Built from `Dockerfile` | Runs scrapers on demand; idle otherwise |
+
+On startup the scraper container initialises the DB schema automatically, then stays idle waiting for you to run scripts inside it.
 
 ---
 
 ## Prerequisites
 
-- Docker Desktop installed
-- `.env` file configured in the project root (see below)
+- Docker Desktop running
+- `.env` file in the project root (copy from `.env.example`)
 
 ---
 
-## 🚀 Quick Start (Docker Compose - Recommended)
+## Quick Start
 
-### 1. Start services (database + scraper container)
+### 1. Start both containers
 
 ```sh
-docker-compose up --build
+npm run docker:up
 ```
 
-This will:
+- Builds the scraper image
+- Starts PostgreSQL and waits for it to pass its health check
+- Runs DB schema initialisation once
+- Leaves the scraper container idle and ready
 
-- Start the PostgreSQL database container
-- Initialize the database schema
-- Build the scraper container (but NOT run the scraper)
+Check that both are running:
 
-### 2. Run the scraper manually (each time you want to scrape)
+```sh
+docker-compose ps
+```
 
-**Run compiled JavaScript:**
+### 2. Open an interactive shell inside the scraper container
+
+```sh
+docker exec -it dura-vault-scraper sh
+```
+
+You are now inside the container. Run any scraper script:
 
 ```sh
 # Highscores (daily EOD)
-docker-compose run --rm scraper node dist/highscore/main.js
+npm run start:highscores:scrape
 
-# Online scraper (15-min tick)
-docker-compose run --rm scraper node dist/online/main.js
+# Online players (every 15 min tick)
+npm run start:online:scrape
 
-# Online EOD (top 100 + truncate temp)
-docker-compose run --rm scraper node dist/online/online-data-insert.js
+# Online EOD — insert top 100 + truncate temp table
+npm run start:online:insert-on-db
 ```
 
-**Run TypeScript directly (for development/debug):**
+The scraper writes directly to the `dura-vault-db` container over the shared Docker network. No local PostgreSQL needed.
+
+Exit the container shell with `exit` or `Ctrl+D`. The container keeps running.
+
+### 3. Stop everything
 
 ```sh
-# Highscores
-docker-compose run --rm scraper npx ts-node src/highscore/main.ts
-
-# Online scraper
-docker-compose run --rm scraper npx ts-node src/online/main.ts
-
-# Online EOD
-docker-compose run --rm scraper npx ts-node src/online/online-data-insert.ts
-```
-
-### 3. View scraper logs
-
-```sh
-docker logs dura-vault-scraper
-```
-
-### 4. Stop all services
-
-```sh
+npm run docker:down
+// OR
 docker-compose down
 ```
 
-### 5. Stop and remove volumes (deletes all data)
+### 4. Stop and delete all data (drops the volume)
 
 ```sh
 docker-compose down -v
@@ -93,103 +97,71 @@ docker-compose down -v
 
 ---
 
-## 🛠️ Manual Docker Commands (Without Compose)
-
-### Build the image
+## Viewing Logs
 
 ```sh
-docker build -t dura-vault-scraper .
+# Live logs from the DB container
+docker logs dura-vault-db -f
+
+# Last 50 lines from the scraper container
+docker logs dura-vault-scraper --tail 50
 ```
 
-### Run the container (database must be running separately)
+---
+
+## Connecting with any Postgres client
+
+The DB port is exposed to your host machine. Use these settings:
+
+| Field    | Value                                             |
+| -------- | ------------------------------------------------- |
+| Host     | `db`                                       |
+| Port     | value of `PGPORT` in your `.env` |
+| Database | value of `PGDATABASE`                             |
+| User     | value of `PGUSER`                                 |
+| Password | value of `PGPASSWORD`                             |
+| SSL      | value of `DB_SSL`                                 |
+
+---
+
+## Environment Variables
+
+All variables are defined in `.env` (copy from `.env.example`).
+
+| Variable                            | Used by      | Notes                                                              |
+| ----------------------------------- | ------------ | ------------------------------------------------------------------ |
+| `PGHOST`                            | scraper → db | Set to `db` automatically by compose; override only for local runs |
+| `PGPORT`                            | both         | Port for the PostgreSQL server                                      |
+| `PGDATABASE`                        | both         | DB name                                                            |
+| `PGUSER`                            | both         | DB user                                                            |
+| `PGPASSWORD`                        | both         | DB password                                                        |
+| `DB_SSL`                            | scraper      | `false`. Set `true` only for cloud DBs with SSL                    |
+| `HIGHSCORES_SCRAPER_BASE_URL`       | scraper      | Base URL for highscores pages                                      |
+| `HIGHSCORES_SCRAPER_PAGES_TO_SCRAP` | scraper      | Number of pages to scrape                                          |
+| `ONLINE_SCRAPER_URL`                | scraper      | URL for the online players endpoint                                |
+| `ENABLE_DEBUG`                      | scraper      | Set `true` to enable verbose debug logs                            |
+
+---
+
+## Useful Commands
 
 ```sh
-docker run --env-file .env dura-vault-scraper
-```
+# Rebuild the scraper image after code changes
+docker-compose up --build -d
 
-### Run TypeScript directly (for development/debug)
+# Open a shell in the scraper container
+docker exec -it dura-vault-scraper sh
 
-```sh
-docker-compose run --rm scraper npx ts-node src/highscore/main.ts
-```
-
-## 🔎 Useful Docker Commands
-
-### Access PostgreSQL console
-
-```sh
+# Open a psql console in the DB container
 docker exec -it dura-vault-db psql -U $PGUSER -d $PGDATABASE
+
+# List running containers
+docker-compose ps
+
+# Remove stopped containers and dangling images
+docker-compose down
+docker image prune -f
 ```
-
-### View running containers
-
-```sh
-docker ps
-```
-
-### View all containers (including stopped)
-
-```sh
-docker ps -a
-```
-
-### View volumes
-
-```sh
-docker volume ls
-```
-
-### Remove unused images
-
-```sh
-docker image prune -a
-```
-
----
-
-## ⚙️ Environment Variables
-
-Define these in your `.env` file:
-
-- `PGHOST` - Database host (`db` for Docker Compose, `host.docker.internal` for local)
-- `PGPORT` - Database port (default: 5432)
-- `PGUSER` - Database user
-- `PGPASSWORD` - Database password
-- `PGDATABASE` - Database name
-- `HIGHSCORES_SCRAPER_BASE_URL` - Base URL for highscores scraping
-- `HIGHSCORES_SCRAPER_PAGES_TO_SCRAP` - Number of pages to scrape
-- `ONLINE_SCRAPER_URL` - Full URL of the online players page
-
----
-
-## 🧩 Typical Workflow
-
-1. `docker-compose up --build` (start DB and scraper container)
-2. `docker-compose run --rm scraper node dist/highscore/main.js` (run highscores)
-3. `docker-compose run --rm scraper node dist/online/main.js` (run online tick)
-4. `docker-compose run --rm scraper node dist/online/online-data-insert.js` (run online EOD)
-5. Check logs, query the database, repeat as needed
-
----
-
-## 🐞 Troubleshooting
-
-**Container exits immediately**
-
-- This is normal. The scraper only runs when you trigger it manually.
-
-**Database connection refused**
-
-- Make sure the `db` container is running: `docker ps`
-- Check that `PGHOST=db` in your `docker-compose.yml`
-
-**Changes not reflected**
-
-- Rebuild the image: `docker-compose up --build`
-
-**Port already in use**
-
-- Stop local PostgreSQL or change the port in `.env`
 
 ---
 

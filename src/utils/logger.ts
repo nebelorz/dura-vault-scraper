@@ -45,7 +45,7 @@ export function error(message: string, ...args: any[]): void {
  * Logs a debug message to the console (can be disabled in production).
  */
 export function debug(message: string, ...args: any[]): void {
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.ENABLE_DEBUG === 'true') {
     console.debug(formatMessage(LogLevel.DEBUG, message), ...args);
   }
 }

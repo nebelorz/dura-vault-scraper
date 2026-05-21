@@ -1,5 +1,6 @@
 import { mainHighscoresScraper } from './scraper/scraper';
 import { highscoresDataInsert } from './db/highscores-data-insert';
+import { closePool } from '../db/pool';
 import { logger } from '../utils/logger';
 
 async function main() {
@@ -9,6 +10,8 @@ async function main() {
   } catch (err) {
     logger.error('Fatal error:', err);
     process.exit(1);
+  } finally {
+    await closePool();
   }
 }
 
