@@ -1,18 +1,18 @@
-name: Dura Vault - Online Scraper
+name: Dura Vault - Daily DB Insert
 
 on:
   workflow_dispatch:
 
 concurrency:
-  group: online-scraper
-  cancel-in-progress: true
+  group: db-daily-insert
+  cancel-in-progress: false
 
 jobs:
-  online-scraper:
-    name: Online Players Scrape → temp_online_snapshots
+  db-daily-insert:
+    name: DB Init + Highscores + Online → Production Tables
     runs-on: ubuntu-latest
     environment: dura-vault-scraper
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     env:
       PGHOST: ${{ secrets.PGHOST }}
@@ -21,7 +21,6 @@ jobs:
       PGDATABASE: ${{ secrets.PGDATABASE }}
       PGPORT: ${{ secrets.PGPORT }}
       DB_SSL: ${{ secrets.DB_SSL }}
-      ONLINE_SCRAPER_URL: ${{ vars.ONLINE_SCRAPER_URL }}
 
     steps:
       - name: Checkout repository
@@ -39,5 +38,11 @@ jobs:
       - name: Build TypeScript
         run: npm run build
 
-      - name: Run online scraper
-        run: node dist/online/online-scraper.js
+      - name: Initialize database
+        run: node dist/db/init-db.js
+
+      - name: Run highscores daily insert
+        run: node dist/highscore/highscores-daily-insert.js
+
+      - name: Run online daily insert
+        run: node dist/online/online-daily-insert.js

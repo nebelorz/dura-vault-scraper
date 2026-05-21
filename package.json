@@ -7,9 +7,10 @@
     "build": "tsc",
     "eslint": "eslint src --ext .ts --max-warnings 0",
     "start:db": "ts-node src/db/init-db.ts",
-    "start:highscores:scrape": "ts-node src/highscore/main.ts",
-    "start:online:scrape": "ts-node src/online/main.ts",
-    "start:online:insert-on-db": "ts-node src/online/online-data-insert.ts",
+    "start:highscores:scraper": "ts-node src/highscore/highscores-scraper.ts",
+    "start:highscores:daily-insert": "ts-node src/highscore/highscores-daily-insert.ts",
+    "start:online:scraper": "ts-node src/online/online-scraper.ts",
+    "start:online:daily-insert": "ts-node src/online/online-daily-insert.ts",
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down"
   },

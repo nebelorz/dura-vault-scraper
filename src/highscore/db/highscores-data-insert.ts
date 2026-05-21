@@ -1,17 +1,17 @@
 import {
-  closePool,
   insertTempHighscoreSnapshots,
   insertTopGainers,
   insertTopSkillGainers,
   insertExperienceLosses,
 } from './repository';
+import { HIGHSCORE_SECTIONS } from '../config';
 import { logger } from '../../utils/logger';
 import type { HighscoreSection } from '../types';
 
-export async function highscoresDataInsert(
+export async function insertHighscoreSnapshots(
   scrapeResults: Array<{ section: HighscoreSection; entries: any[] }>,
-) {
-  logger.section('Inserting scraped data into temp_highscore_snapshots table...');
+): Promise<void> {
+  logger.section('Inserting scraped data into temp_highscore_snapshots...');
   for (const { section, entries } of scrapeResults) {
     if (entries.length > 0) {
       try {
@@ -21,37 +21,35 @@ export async function highscoresDataInsert(
       }
     }
   }
+}
+
+export async function processHighscoreTop(): Promise<void> {
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
 
-  // Experience gainers
-  logger.section('Inserting top experience gainers into highscore_top table...');
+  logger.section('Inserting top experience gainers into highscore_top...');
   try {
     await insertTopGainers(today, yesterday);
   } catch (err) {
     logger.error('Failed to insert top experience gainers:', err);
   }
 
-  // Experience losses
-  logger.section('Inserting experience losses into highscore_top table...');
+  logger.section('Inserting experience losses into highscore_top...');
   try {
     await insertExperienceLosses(today, yesterday);
   } catch (err) {
     logger.error('Failed to insert experience losses:', err);
   }
 
-  // Skill gainers
-  logger.section('Inserting top skill gainers into highscore_top table...');
-  for (const { section } of scrapeResults) {
+  logger.section('Inserting top skill gainers into highscore_top...');
+  for (const section of HIGHSCORE_SECTIONS) {
     if (section !== 'experience') {
       try {
         await insertTopSkillGainers(section, today, yesterday);
       } catch (err) {
-        logger.error(`Failed to insert top skill gainers for section ${section}:`, err);
+        logger.error(`Failed to insert top skill gainers for ${section}:`, err);
       }
     }
   }
-
-  await closePool();
 }
