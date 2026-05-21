@@ -157,13 +157,68 @@ Used to calculate the real delta between scraper executions.
 
 ## 📦 Quick Start
 
-### 1. Install dependencies
+> The recommended way to run this project is with Docker. No local PostgreSQL or Node.js installation required. See [README_DOCKER.md](README_DOCKER.md) for the full Docker guide.
 
-```sh
-npm install
+### Option A — Docker (recommended)
+
+#### 1. Configure environment
+
+Copy `.env.example` to `.env` and fill in your values:
+
+```env
+HIGHSCORES_SCRAPER_BASE_URL=https://example.com
+HIGHSCORES_SCRAPER_PAGES_TO_SCRAP=5
+ONLINE_SCRAPER_URL=https://example.com/?online
+PGUSER=youruser
+PGPASSWORD=yourpassword
+PGDATABASE=yourdb
+PGPORT=5432
+DB_SSL=false
 ```
 
-### 2. Configure environment
+> `PGHOST` is **not** needed in `.env` for Docker — it is automatically set to `db` (the internal container hostname) by `docker-compose.yml`.
+
+#### 2. Start containers (builds image + initialises DB schema automatically)
+
+```sh
+npm run docker:up
+```
+
+#### 3. Run scrapers inside the container
+
+```sh
+docker exec -it dura-vault-scraper sh
+```
+
+```sh
+# Highscores scraper — scrape + write to temp_highscore_snapshots (daily)
+npm run start:highscores:scraper
+
+# Highscores daily insert — temp → production tables (daily EOD)
+npm run start:highscores:daily-insert
+
+# Online scraper — scrape + write to temp_online_snapshots (every 15 min)
+npm run start:online:scraper
+
+# Online daily insert — temp → production tables + truncate (daily EOD)
+npm run start:online:daily-insert
+```
+
+See [README_DOCKER.md](README_DOCKER.md) for logs, connecting with a DB client, and all Docker commands.
+
+---
+
+### Option B — Local development (requires Node.js 18+ locally)
+
+#### 1. Install dependencies
+
+```sh
+npm ci
+```
+
+> `npm ci` is required for local development: it provides TypeScript type checking, IntelliSense, ESLint, and the `ts-node` runtime used by all `start:*` scripts.
+
+#### 2. Configure environment
 
 Create a `.env` file in the project root:
 
@@ -171,20 +226,33 @@ Create a `.env` file in the project root:
 HIGHSCORES_SCRAPER_BASE_URL=https://example.com
 HIGHSCORES_SCRAPER_PAGES_TO_SCRAP=5
 ONLINE_SCRAPER_URL=https://example.com/?online
-PGHOST=db
+PGHOST=localhost
 PGUSER=youruser
 PGPASSWORD=yourpassword
 PGDATABASE=yourdb
-PGPORT=yourPostgreSQLport
+PGPORT=5432
+DB_SSL=false
 ```
 
-### 3. Initialize the database
+#### 3. Start the database (Docker)
+
+```sh
+docker run -d \
+  --name dura-vault-db \
+  -e POSTGRES_USER=youruser \
+  -e POSTGRES_PASSWORD=yourpassword \
+  -e POSTGRES_DB=yourdb \
+  -p 5432:5432 \
+  postgres:15-alpine
+```
+
+#### 4. Initialize the database schema
 
 ```sh
 npm run start:db
 ```
 
-### 4. Run the scrapers
+#### 5. Run the scrapers
 
 ```sh
 # Highscores scraper — scrape + write to temp_highscore_snapshots (daily)
@@ -346,9 +414,15 @@ GitHub Actions for this project are managed externally via [cron-job.org](https:
 
 ## 📋 Requirements
 
+**Docker (recommended):**
+
+- Docker Desktop
+
+**Local development:**
+
 - Node.js 18+
-- PostgreSQL 13+
 - npm 9+
+- PostgreSQL 13+ (or run it via Docker as shown above)
 
 ---
 

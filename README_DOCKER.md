@@ -67,14 +67,17 @@ docker exec -it dura-vault-scraper sh
 You are now inside the container. Run any scraper script:
 
 ```sh
-# Highscores (daily EOD)
-npm run start:highscores:scrape
+# Highscores scraper — scrape + write to temp_highscore_snapshots (daily)
+npm run start:highscores:scraper
 
-# Online players (every 15 min tick)
-npm run start:online:scrape
+# Highscores daily insert — temp → production tables (daily EOD)
+npm run start:highscores:daily-insert
 
-# Online EOD — insert top 100 + truncate temp table
-npm run start:online:insert-on-db
+# Online scraper — scrape + write to temp_online_snapshots (every 15 min)
+npm run start:online:scraper
+
+# Online daily insert — temp → production tables + truncate (daily EOD)
+npm run start:online:daily-insert
 ```
 
 The scraper writes directly to the `dura-vault-db` container over the shared Docker network. No local PostgreSQL needed.
@@ -113,14 +116,14 @@ docker logs dura-vault-scraper --tail 50
 
 The DB port is exposed to your host machine. Use these settings:
 
-| Field    | Value                                             |
-| -------- | ------------------------------------------------- |
-| Host     | `db`                                       |
+| Field    | Value                            |
+| -------- | -------------------------------- |
+| Host     | `localhost`                      |
 | Port     | value of `PGPORT` in your `.env` |
-| Database | value of `PGDATABASE`                             |
-| User     | value of `PGUSER`                                 |
-| Password | value of `PGPASSWORD`                             |
-| SSL      | value of `DB_SSL`                                 |
+| Database | value of `PGDATABASE`            |
+| User     | value of `PGUSER`                |
+| Password | value of `PGPASSWORD`            |
+| SSL      | value of `DB_SSL`                |
 
 ---
 
@@ -131,7 +134,7 @@ All variables are defined in `.env` (copy from `.env.example`).
 | Variable                            | Used by      | Notes                                                              |
 | ----------------------------------- | ------------ | ------------------------------------------------------------------ |
 | `PGHOST`                            | scraper → db | Set to `db` automatically by compose; override only for local runs |
-| `PGPORT`                            | both         | Port for the PostgreSQL server                                      |
+| `PGPORT`                            | both         | Port for the PostgreSQL server                                     |
 | `PGDATABASE`                        | both         | DB name                                                            |
 | `PGUSER`                            | both         | DB user                                                            |
 | `PGPASSWORD`                        | both         | DB password                                                        |
