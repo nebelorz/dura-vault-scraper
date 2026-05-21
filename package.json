@@ -10,13 +10,8 @@
     "start:highscores:scrape": "ts-node src/highscore/main.ts",
     "start:online:scrape": "ts-node src/online/main.ts",
     "start:online:insert-on-db": "ts-node src/online/online-data-insert.ts",
-    "docker:build": "docker build -t dura-vault-scraper .",
-    "docker:build:clean": "docker build -t dura-vault-scraper . && docker image prune -f",
-    "docker:up": "docker-compose up --build",
-    "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f",
-    "docker:ps": "docker-compose ps",
-    "docker:prune": "docker image prune -f"
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down"
   },
   "keywords": [],
   "author": "",

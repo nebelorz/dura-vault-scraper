@@ -15,6 +15,7 @@ jobs:
       PGPASSWORD: ${{ secrets.PGPASSWORD }}
       PGDATABASE: ${{ secrets.PGDATABASE }}
       PGPORT: ${{ secrets.PGPORT }}
+      DB_SSL: ${{ secrets.DB_SSL }}
       HIGHSCORES_SCRAPER_BASE_URL: ${{ vars.HIGHSCORES_SCRAPER_BASE_URL }}
       HIGHSCORES_SCRAPER_PAGES_TO_SCRAP: ${{ vars.HIGHSCORES_SCRAPER_PAGES_TO_SCRAP }}
 
@@ -22,7 +23,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v4
 
-      - name: Install Node.js 20
+      - name: Install Node.JS
         uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -36,15 +37,9 @@ jobs:
 
       - name: Execute database initialization
         run: node dist/db/init-db.js
-        env:
-          NODE_ENV: production
 
       - name: Execute Highscores Scraper + DB inserts
         run: node dist/highscore/main.js
-        env:
-          NODE_ENV: production
 
       - name: Execute Online DB inserts
         run: node dist/online/online-data-insert.js
-        env:
-          NODE_ENV: production

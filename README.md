@@ -160,11 +160,11 @@ Create a `.env` file in the project root:
 HIGHSCORES_SCRAPER_BASE_URL=https://example.com
 HIGHSCORES_SCRAPER_PAGES_TO_SCRAP=5
 ONLINE_SCRAPER_URL=https://example.com/?online
-PGHOST=localhost
+PGHOST=db
 PGUSER=youruser
 PGPASSWORD=yourpassword
 PGDATABASE=yourdb
-PGPORT=5432
+PGPORT=yourPostgreSQLport
 ```
 
 ### 3. Initialize the database
