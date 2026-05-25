@@ -12,6 +12,7 @@ import {
   queryCreateOnlineIndexes,
   queryCreateOnlineScraperMetadataTable,
 } from '../online/db/schema';
+import { queryCreateDeathsTable, queryCreateDeathsIndexes } from '../deaths/db/schema';
 import {
   removeOldSnapshotsFromTempHighscoreSnapshotTable,
   closePool,
@@ -45,6 +46,10 @@ async function main() {
     await client.query(queryCreateOnlineScraperMetadataTable);
     logger.info('[ONLINE] Table online_scraper_metadata OK');
 
+    // Deaths
+    await client.query(queryCreateDeathsTable);
+    logger.info('[DEATHS] Table deaths OK');
+
     // ||||||||||||||||||||
     // || CREATE INDEXES ||
     // ||||||||||||||||||||
@@ -57,6 +62,10 @@ async function main() {
     // Online
     await client.query(queryCreateOnlineIndexes);
     logger.info('[ONLINE] Indexes OK');
+
+    // Deaths
+    await client.query(queryCreateDeathsIndexes);
+    logger.info('[DEATHS] Indexes OK');
 
     // ||||||||||||||
     // || CLEAN-UP ||

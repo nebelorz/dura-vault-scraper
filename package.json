@@ -11,6 +11,7 @@
     "start:highscores:daily-insert": "ts-node src/highscore/highscores-daily-insert.ts",
     "start:online:scraper": "ts-node src/online/online-scraper.ts",
     "start:online:daily-insert": "ts-node src/online/online-daily-insert.ts",
+    "start:deaths:scraper": "ts-node src/deaths/deaths-scraper.ts",
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down"
   },

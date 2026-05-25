@@ -1,15 +1,15 @@
-name: Dura Vault - Online Scraper
+name: Dura Vault - Deaths Scraper
 
 on:
   workflow_dispatch:
 
 concurrency:
-  group: online-scraper
+  group: deaths-scraper
   cancel-in-progress: false
 
 jobs:
-  online-scraper:
-    name: Online Players Scrape → temp_online_snapshots
+  deaths-scraper:
+    name: Deaths Scrape → deaths
     runs-on: ubuntu-latest
     environment: dura-vault-scraper
     timeout-minutes: 5
@@ -21,7 +21,8 @@ jobs:
       PGDATABASE: ${{ secrets.PGDATABASE }}
       PGPORT: ${{ secrets.PGPORT }}
       DB_SSL: ${{ secrets.DB_SSL }}
-      ONLINE_SCRAPER_URL: ${{ vars.ONLINE_SCRAPER_URL }}
+      DEATHS_SCRAPER_URL: ${{ vars.DEATHS_SCRAPER_URL }}
+      DURA_SERVER_TIMEZONE: ${{ vars.DURA_SERVER_TIMEZONE }}
 
     steps:
       - name: Checkout repository
@@ -39,5 +40,5 @@ jobs:
       - name: Build TypeScript
         run: npm run build
 
-      - name: Run online scraper
-        run: node dist/online/online-scraper.js
+      - name: Run deaths scraper
+        run: node dist/deaths/deaths-scraper.js

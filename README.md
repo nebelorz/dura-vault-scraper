@@ -18,6 +18,8 @@ Dura Vault Scraper automates the daily download of Dura Vault highscores and tra
 - ✅ Online players tracking every 15 minutes
 - ✅ Accurate online time accumulation (delta-based, drift-proof)
 - ✅ Daily top 100 most active online players
+- ✅ Player deaths tracking every X minutes (PvP & PvE)
+- ✅ Server-timezone-aware death timestamps (`America/New_York` via `DURA_SERVER_TIMEZONE`)
 
 ---
 
@@ -69,6 +71,21 @@ upsertOnlineSnapshots (online/db/repository.ts)
   └─> temp_online_snapshots (UPSERT — accumulates online_time)
       - delta calculated from online_scraper_metadata.last_run_at
       - cap of 60 min to avoid gaps from reconnecting players
+```
+
+### Deaths — scraper (every 15 min)
+
+```
+src/deaths/deaths-scraper.ts (entrypoint)
+  |
+  v
+mainDeathsScraper (deaths/scraper/scraper.ts)
+  |
+  v
+insertDeaths (deaths/db/repository.ts)
+  └─> deaths (INSERT — ON CONFLICT DO NOTHING deduplication)
+      - timestamp stored as TIMESTAMPTZ (America/New_York → UTC)
+      - is_pvp: true if killer is a player, false if mob
 ```
 
 ### Online players — step 2: daily insert (daily EOD)
@@ -169,6 +186,8 @@ Copy `.env.example` to `.env` and fill in your values:
 HIGHSCORES_SCRAPER_BASE_URL=https://example.com
 HIGHSCORES_SCRAPER_PAGES_TO_SCRAP=5
 ONLINE_SCRAPER_URL=https://example.com/?online
+DEATHS_SCRAPER_URL=https://example.com/?deaths
+DURA_SERVER_TIMEZONE=America/New_York
 PGUSER=youruser
 PGPASSWORD=yourpassword
 PGDATABASE=yourdb
@@ -202,6 +221,9 @@ npm run start:online:scraper
 
 # Online daily insert — temp → production tables + truncate (daily EOD)
 npm run start:online:daily-insert
+
+# Deaths scraper — scrape + write directly to deaths table (every 15 min)
+npm run start:deaths:scraper
 ```
 
 See [README_DOCKER.md](README_DOCKER.md) for logs, connecting with a DB client, and all Docker commands.
@@ -226,6 +248,8 @@ Create a `.env` file in the project root:
 HIGHSCORES_SCRAPER_BASE_URL=https://example.com
 HIGHSCORES_SCRAPER_PAGES_TO_SCRAP=5
 ONLINE_SCRAPER_URL=https://example.com/?online
+DEATHS_SCRAPER_URL=https://example.com/?deaths
+DURA_SERVER_TIMEZONE=America/New_York
 PGHOST=localhost
 PGUSER=youruser
 PGPASSWORD=yourpassword
@@ -266,6 +290,9 @@ npm run start:online:scraper
 
 # Online daily insert — temp → production tables + truncate (daily EOD)
 npm run start:online:daily-insert
+
+# Deaths scraper — scrape + write directly to deaths table (every 15 min)
+npm run start:deaths:scraper
 ```
 
 ---
@@ -291,6 +318,13 @@ npm run start:online:daily-insert
 | src/online/db/repository.ts                   | Online DB queries and upserts            |
 | src/online/db/schema.ts                       | Online table SQL definitions             |
 | src/online/types/                             | TypeScript types for online feature      |
+| src/deaths/deaths-scraper.ts                  | Deaths scraper entrypoint (every 15 min) |
+| src/deaths/config.ts                          | Deaths-specific configuration            |
+| src/deaths/scraper/scraper.ts                 | Deaths scraper orchestration             |
+| src/deaths/scraper/parse.ts                   | Deaths HTML parsing logic                |
+| src/deaths/db/repository.ts                   | Deaths DB inserts                        |
+| src/deaths/db/schema.ts                       | Deaths table SQL definitions             |
+| src/deaths/types/                             | TypeScript types for deaths feature      |
 | src/db/config.ts                              | Shared DB connection config              |
 | src/db/pool.ts                                | Shared PostgreSQL pool                   |
 | src/db/init-db.ts                             | Database initialization script           |
@@ -300,6 +334,7 @@ npm run start:online:daily-insert
 | .github/workflows/db-init.yml                 | DB initialization workflow (on demand)   |
 | .github/workflows/highscores-daily-insert.yml | Highscores daily insert workflow (EOD)   |
 | .github/workflows/online-daily-insert.yml     | Online daily insert workflow (EOD)       |
+| .github/workflows/deaths-scraper.yml          | Deaths scraper workflow (every 15 min)   |
 
 ---
 
@@ -337,6 +372,15 @@ npm run start:online:daily-insert
 - Other sections (magic, fishing, shield, etc.) use `gain_level` (level column)
 - `gain_points` is `null` for skill sections
 
+### deaths
+
+| player_name | killer_name | player_level | died_at                | is_pvp |
+| ----------- | ----------- | ------------ | ---------------------- | ------ |
+| Ichibios    | Dreadseer   | 138          | 2026-05-25 18:41:53+00 | false  |
+| Sd Mage     | Deidamia    | 19           | 2026-05-15 23:47:43+00 | true   |
+
+**Note:** `died_at` is stored as UTC. Source is game server time (`America/New_York`). `is_pvp = true` means killed by another player.
+
 ---
 
 ## 🛠️ Useful Commands
@@ -367,6 +411,9 @@ npm run start:online:scraper
 
 # Online daily insert — temp → production (daily EOD)
 npm run start:online:daily-insert
+
+# Deaths scraper (every 15 min)
+npm run start:deaths:scraper
 ```
 
 ---

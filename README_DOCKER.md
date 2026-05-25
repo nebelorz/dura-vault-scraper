@@ -78,6 +78,9 @@ npm run start:online:scraper
 
 # Online daily insert — temp → production tables + truncate (daily EOD)
 npm run start:online:daily-insert
+
+# Deaths scraper — scrape + write directly to deaths table (every X mins, depends on server player volume)
+npm run start:deaths:scraper
 ```
 
 The scraper writes directly to the `dura-vault-db` container over the shared Docker network. No local PostgreSQL needed.

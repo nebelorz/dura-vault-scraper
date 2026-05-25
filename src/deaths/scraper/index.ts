@@ -1,0 +1,1 @@
+export { mainDeathsScraper } from './scraper';
