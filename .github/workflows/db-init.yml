@@ -1,15 +1,15 @@
-name: Dura Vault - Online Scraper
+name: Dura Vault - DB Init
 
 on:
   workflow_dispatch:
 
 concurrency:
-  group: online-scraper
-  cancel-in-progress: true
+  group: db-init
+  cancel-in-progress: false
 
 jobs:
-  online-scraper:
-    name: Online Players Scrape → temp_online_snapshots
+  db-init:
+    name: DB Init → Create tables & indexes
     runs-on: ubuntu-latest
     environment: dura-vault-scraper
     timeout-minutes: 5
@@ -21,7 +21,6 @@ jobs:
       PGDATABASE: ${{ secrets.PGDATABASE }}
       PGPORT: ${{ secrets.PGPORT }}
       DB_SSL: ${{ secrets.DB_SSL }}
-      ONLINE_SCRAPER_URL: ${{ vars.ONLINE_SCRAPER_URL }}
 
     steps:
       - name: Checkout repository
@@ -39,5 +38,5 @@ jobs:
       - name: Build TypeScript
         run: npm run build
 
-      - name: Run online scraper
-        run: node dist/online/online-scraper.js
+      - name: Initialize database
+        run: node dist/db/init-db.js

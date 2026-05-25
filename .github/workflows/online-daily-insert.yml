@@ -1,18 +1,18 @@
-name: Dura Vault - Daily DB Insert
+name: Dura Vault - Online Daily Insert
 
 on:
   workflow_dispatch:
 
 concurrency:
-  group: db-daily-insert
+  group: online-daily-insert
   cancel-in-progress: false
 
 jobs:
-  db-daily-insert:
-    name: DB Init + Highscores + Online → Production Tables
+  online-daily-insert:
+    name: Online → Production Tables
     runs-on: ubuntu-latest
     environment: dura-vault-scraper
-    timeout-minutes: 15
+    timeout-minutes: 10
 
     env:
       PGHOST: ${{ secrets.PGHOST }}
@@ -37,12 +37,6 @@ jobs:
 
       - name: Build TypeScript
         run: npm run build
-
-      - name: Initialize database
-        run: node dist/db/init-db.js
-
-      - name: Run highscores daily insert
-        run: node dist/highscore/highscores-daily-insert.js
 
       - name: Run online daily insert
         run: node dist/online/online-daily-insert.js

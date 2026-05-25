@@ -272,32 +272,34 @@ npm run start:online:daily-insert
 
 ## 🧩 Project Structure
 
-| Folder/File                                | Description                              |
-| ------------------------------------------ | ---------------------------------------- |
-| src/                                       | Main source code                         |
-| src/highscore/highscores-scraper.ts        | Highscores scraper entrypoint (daily)    |
-| src/highscore/highscores-daily-insert.ts   | Highscores daily insert entrypoint (EOD) |
-| src/highscore/config.ts                    | Highscore-specific configuration         |
-| src/highscore/scraper/scraper.ts           | Scraping and parsing orchestration       |
-| src/highscore/scraper/parse.ts             | HTML parsing logic                       |
-| src/highscore/db/repository.ts             | DB queries and inserts                   |
-| src/highscore/db/highscores-data-insert.ts | DB insert orchestration (temp + final)   |
-| src/highscore/types/                       | TypeScript types for highscore feature   |
-| src/online/online-scraper.ts               | Online scraper entrypoint (every 15 min) |
-| src/online/online-daily-insert.ts          | Online daily insert entrypoint (EOD)     |
-| src/online/config.ts                       | Online-specific configuration            |
-| src/online/scraper/scraper.ts              | Online scraper orchestration             |
-| src/online/scraper/parse.ts                | Online HTML parsing logic                |
-| src/online/db/repository.ts                | Online DB queries and upserts            |
-| src/online/db/schema.ts                    | Online table SQL definitions             |
-| src/online/types/                          | TypeScript types for online feature      |
-| src/db/config.ts                           | Shared DB connection config              |
-| src/db/pool.ts                             | Shared PostgreSQL pool                   |
-| src/db/init-db.ts                          | Database initialization script           |
-| src/utils/                                 | Shared utilities (fetch-html, logger)    |
-| .github/workflows/online-scraper.yml       | Online scraper workflow (every 15 min)   |
-| .github/workflows/highscores-scraper.yml   | Highscores scraper workflow (daily)      |
-| .github/workflows/db-daily-insert.yml      | Daily DB insert workflow (EOD)           |
+| Folder/File                                   | Description                              |
+| --------------------------------------------- | ---------------------------------------- |
+| src/                                          | Main source code                         |
+| src/highscore/highscores-scraper.ts           | Highscores scraper entrypoint (daily)    |
+| src/highscore/highscores-daily-insert.ts      | Highscores daily insert entrypoint (EOD) |
+| src/highscore/config.ts                       | Highscore-specific configuration         |
+| src/highscore/scraper/scraper.ts              | Scraping and parsing orchestration       |
+| src/highscore/scraper/parse.ts                | HTML parsing logic                       |
+| src/highscore/db/repository.ts                | DB queries and inserts                   |
+| src/highscore/db/highscores-data-insert.ts    | DB insert orchestration (temp + final)   |
+| src/highscore/types/                          | TypeScript types for highscore feature   |
+| src/online/online-scraper.ts                  | Online scraper entrypoint (every 15 min) |
+| src/online/online-daily-insert.ts             | Online daily insert entrypoint (EOD)     |
+| src/online/config.ts                          | Online-specific configuration            |
+| src/online/scraper/scraper.ts                 | Online scraper orchestration             |
+| src/online/scraper/parse.ts                   | Online HTML parsing logic                |
+| src/online/db/repository.ts                   | Online DB queries and upserts            |
+| src/online/db/schema.ts                       | Online table SQL definitions             |
+| src/online/types/                             | TypeScript types for online feature      |
+| src/db/config.ts                              | Shared DB connection config              |
+| src/db/pool.ts                                | Shared PostgreSQL pool                   |
+| src/db/init-db.ts                             | Database initialization script           |
+| src/utils/                                    | Shared utilities (fetch-html, logger)    |
+| .github/workflows/online-scraper.yml          | Online scraper workflow (every 15 min)   |
+| .github/workflows/highscores-scraper.yml      | Highscores scraper workflow (daily)      |
+| .github/workflows/db-init.yml                 | DB initialization workflow (on demand)   |
+| .github/workflows/highscores-daily-insert.yml | Highscores daily insert workflow (EOD)   |
+| .github/workflows/online-daily-insert.yml     | Online daily insert workflow (EOD)       |
 
 ---
 
@@ -400,13 +402,15 @@ The system checks for data from the previous day before calculating gains. If no
 
 GitHub Actions for this project are managed externally via [cron-job.org](https://cron-job.org/). Each workflow is triggered independently via `workflow_dispatch` through the GitHub API.
 
-| Workflow           | File                     | Schedule         | Purpose                                         |
-| ------------------ | ------------------------ | ---------------- | ----------------------------------------------- |
-| Online Scraper     | `online-scraper.yml`     | Every 15 min     | Scrape online players → `temp_online_snapshots` |
-| Highscores Scraper | `highscores-scraper.yml` | Once daily       | Scrape highscores → `temp_highscore_snapshots`  |
-| Daily DB Insert    | `db-daily-insert.yml`    | Once daily (EOD) | DB init + move temp data → production tables    |
+| Workflow                | File                          | Schedule                              | Purpose                                         |
+| ----------------------- | ----------------------------- | ------------------------------------- | ----------------------------------------------- |
+| Online Scraper          | `online-scraper.yml`          | Every 15 min                          | Scrape online players → `temp_online_snapshots` |
+| Highscores Scraper      | `highscores-scraper.yml`      | Once daily                            | Scrape highscores → `temp_highscore_snapshots`  |
+| DB Init                 | `db-init.yml`                 | On demand (first deploy / migrations) | Create tables & indexes                         |
+| Highscores Daily Insert | `highscores-daily-insert.yml` | Once daily (EOD)                      | temp_highscore_snapshots → highscore_top        |
+| Online Daily Insert     | `online-daily-insert.yml`     | Once daily (EOD)                      | temp_online_snapshots → online_top + truncate   |
 
-> **First deployment:** trigger `db-daily-insert` manually once before activating the scrapers in cron-job.org. This initializes all tables and indexes.
+> **First deployment:** trigger `db-init` manually once to create all tables and indexes.
 
 - **Check cron job status:** [https://2cdd12ry.status.cron-job.org/](https://2cdd12ry.status.cron-job.org/)
 

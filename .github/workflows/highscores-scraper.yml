@@ -12,7 +12,7 @@ jobs:
     name: Highscores Scrape → temp_highscore_snapshots
     runs-on: ubuntu-latest
     environment: dura-vault-scraper
-    timeout-minutes: 20
+    timeout-minutes: 10
 
     env:
       PGHOST: ${{ secrets.PGHOST }}
