@@ -3,6 +3,7 @@ import {
   insertTopGainers,
   insertTopSkillGainers,
   insertExperienceLosses,
+  removeOldSnapshotsFromTempHighscoreSnapshotTable,
 } from './repository';
 import { HIGHSCORE_SECTIONS } from '../config';
 import { logger } from '../../utils/logger';
@@ -51,5 +52,12 @@ export async function processHighscoreTop(): Promise<void> {
         logger.error(`Failed to insert top skill gainers for ${section}:`, err);
       }
     }
+  }
+
+  logger.section('Cleaning up old temp_highscore_snapshots...');
+  try {
+    await removeOldSnapshotsFromTempHighscoreSnapshotTable();
+  } catch (err) {
+    logger.error('Failed to clean up old temp_highscore_snapshots:', err);
   }
 }
