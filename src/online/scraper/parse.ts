@@ -1,4 +1,6 @@
 import * as cheerio from 'cheerio';
+import { logger } from '../../utils/logger';
+import { isValidVocation } from '../../validations';
 import type { OnlineEntry } from '../types';
 
 // Row parser
@@ -19,6 +21,10 @@ export function parseOnline(html: string): OnlineEntry[] {
     const vocation = tds.eq(2).text().trim();
 
     if (!name || isNaN(level) || level <= 0) return;
+
+    if (!isValidVocation(vocation)) {
+      logger.warn(`[ONLINE] Invalid vocation for player '${name}': '${vocation}'`);
+    }
 
     entries.push({ name, level, vocation });
   });
