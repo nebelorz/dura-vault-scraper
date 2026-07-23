@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
 import { logger } from '../../utils/logger';
+import { isValidVocation } from '../../validations';
 import type { HighscoreEntry } from '../types';
 
 interface ColumnIndices {
@@ -80,6 +81,10 @@ export function parseHighscore(html: string, section?: string): HighscoreEntry[]
     const name = nameCell.find('a span').first().text().trim();
     const vocation = nameCell.find('small').first().text().trim();
     if (!name) return;
+
+    if (!isValidVocation(vocation)) {
+      logger.warn(`[HIGHSCORE] Invalid vocation for player '${name}' in section '${section}': '${vocation}'`);
+    }
 
     // The server renders Dura skills formula value but embeds the real value in [data-dura-value]
     const levelCell = cells.eq(columnIndices.level);
