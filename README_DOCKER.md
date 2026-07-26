@@ -101,6 +101,16 @@ docker-compose down
 docker-compose down -v
 ```
 
+### Seasonal server
+
+To run the seasonal server locally, use the seasonal compose file:
+
+```sh
+docker compose -f docker-compose.seasonal.yml up
+```
+
+This starts a separate PostgreSQL instance on port 5433 and a scraper container configured for the seasonal server.
+
 ---
 
 ## Viewing Logs
@@ -119,14 +129,14 @@ docker logs dura-vault-scraper --tail 50
 
 The DB port is exposed to your host machine. Use these settings:
 
-| Field    | Value                            |
-| -------- | -------------------------------- |
-| Host     | `localhost`                      |
-| Port     | value of `PGPORT` in your `.env` |
-| Database | value of `PGDATABASE`            |
-| User     | value of `PGUSER`                |
-| Password | value of `PGPASSWORD`            |
-| SSL      | value of `DB_SSL`                |
+| Field    | Value                                  |
+| -------- | -------------------------------------- |
+| Host     | `localhost`                            |
+| Port     | value of `CLASSIC_PGPORT` in your `.env` |
+| Database | value of `CLASSIC_PGDATABASE`            |
+| User     | value of `CLASSIC_PGUSER`                |
+| Password | value of `CLASSIC_PGPASSWORD`            |
+| SSL      | value of `CLASSIC_DB_SSL`                |
 
 ---
 
@@ -134,18 +144,21 @@ The DB port is exposed to your host machine. Use these settings:
 
 All variables are defined in `.env` (copy from `.env.example`).
 
-| Variable                            | Used by      | Notes                                                              |
-| ----------------------------------- | ------------ | ------------------------------------------------------------------ |
-| `PGHOST`                            | scraper → db | Set to `db` automatically by compose; override only for local runs |
-| `PGPORT`                            | both         | Port for the PostgreSQL server                                     |
-| `PGDATABASE`                        | both         | DB name                                                            |
-| `PGUSER`                            | both         | DB user                                                            |
-| `PGPASSWORD`                        | both         | DB password                                                        |
-| `DB_SSL`                            | scraper      | `false`. Set `true` only for cloud DBs with SSL                    |
-| `HIGHSCORES_SCRAPER_BASE_URL`       | scraper      | Base URL for highscores pages                                      |
-| `HIGHSCORES_SCRAPER_PAGES_TO_SCRAP` | scraper      | Number of pages to scrape                                          |
-| `ONLINE_SCRAPER_URL`                | scraper      | URL for the online players endpoint                                |
-| `ENABLE_DEBUG`                      | scraper      | Set `true` to enable verbose debug logs                            |
+| Variable | Used by | Notes |
+|---|---|---|---|
+| `SERVER` | scraper | `classic` or `seasonal` — selects which server config to use |
+| `CLASSIC_PGHOST` | scraper → db | Set to `db` automatically by compose; override only for local runs |
+| `CLASSIC_PGPORT` | both | Port for the PostgreSQL server |
+| `CLASSIC_PGDATABASE` | both | DB name |
+| `CLASSIC_PGUSER` | both | DB user |
+| `CLASSIC_PGPASSWORD` | both | DB password |
+| `CLASSIC_DB_SSL` | scraper | `false`. Set `true` only for cloud DBs with SSL |
+| `CLASSIC_BASE_URL` | scraper | Base URL for all scraper endpoints |
+| `CLASSIC_HIGHSCORES_PAGES` | scraper | Number of highscore pages to scrape |
+| `CLASSIC_SERVER_TIMEZONE` | scraper | Server timezone for death timestamps |
+| `ENABLE_DEBUG` | scraper | Set `true` to enable verbose debug logs |
+
+> For seasonal server, prefix all variables with `SEASONAL_` instead of `CLASSIC_`. Use `docker-compose.seasonal.yml` for seasonal Docker deployments.
 
 ---
 

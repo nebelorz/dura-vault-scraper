@@ -183,19 +183,17 @@ Used to calculate the real delta between scraper executions.
 Copy `.env.example` to `.env` and fill in your values:
 
 ```env
-HIGHSCORES_SCRAPER_BASE_URL=https://example.com
-HIGHSCORES_SCRAPER_PAGES_TO_SCRAP=5
-ONLINE_SCRAPER_URL=https://example.com/?online
-DEATHS_SCRAPER_URL=https://example.com/?deaths
-DURA_SERVER_TIMEZONE=America/New_York
-PGUSER=youruser
-PGPASSWORD=yourpassword
-PGDATABASE=yourdb
-PGPORT=5432
-DB_SSL=false
+CLASSIC_BASE_URL=https://example.com
+CLASSIC_HIGHSCORES_PAGES=5
+CLASSIC_SERVER_TIMEZONE=America/New_York
+CLASSIC_PGUSER=youruser
+CLASSIC_PGPASSWORD=yourpassword
+CLASSIC_PGDATABASE=yourdb
+CLASSIC_PGPORT=5432
+CLASSIC_DB_SSL=false
 ```
 
-> `PGHOST` is **not** needed in `.env` for Docker — it is automatically set to `db` (the internal container hostname) by `docker-compose.yml`.
+> `CLASSIC_PGHOST` is **not** needed in `.env` for Docker — it is automatically set to `db` (the internal container hostname) by `docker-compose.yml`.
 
 #### 2. Start containers (builds image + initialises DB schema automatically)
 
@@ -245,17 +243,15 @@ npm ci
 Create a `.env` file in the project root:
 
 ```env
-HIGHSCORES_SCRAPER_BASE_URL=https://example.com
-HIGHSCORES_SCRAPER_PAGES_TO_SCRAP=5
-ONLINE_SCRAPER_URL=https://example.com/?online
-DEATHS_SCRAPER_URL=https://example.com/?deaths
-DURA_SERVER_TIMEZONE=America/New_York
-PGHOST=localhost
-PGUSER=youruser
-PGPASSWORD=yourpassword
-PGDATABASE=yourdb
-PGPORT=5432
-DB_SSL=false
+CLASSIC_BASE_URL=https://example.com
+CLASSIC_HIGHSCORES_PAGES=5
+CLASSIC_SERVER_TIMEZONE=America/New_York
+CLASSIC_PGHOST=localhost
+CLASSIC_PGUSER=youruser
+CLASSIC_PGPASSWORD=yourpassword
+CLASSIC_PGDATABASE=yourdb
+CLASSIC_PGPORT=5432
+CLASSIC_DB_SSL=false
 ```
 
 #### 3. Start the database (Docker)
@@ -335,6 +331,7 @@ npm run start:deaths:scraper
 | .github/workflows/highscores-daily-insert.yml | Highscores daily insert workflow (EOD)   |
 | .github/workflows/online-daily-insert.yml     | Online daily insert workflow (EOD)       |
 | .github/workflows/deaths-scraper.yml          | Deaths scraper workflow (every 15 min)   |
+| docker-compose.seasonal.yml                   | Seasonal server Docker Compose config    |
 
 ---
 
