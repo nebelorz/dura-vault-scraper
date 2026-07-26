@@ -1,4 +1,5 @@
 name: Dura Vault - Deaths Scraper
+run-name: ${{ inputs.server }} - Deaths Scraper
 
 on:
   workflow_dispatch:

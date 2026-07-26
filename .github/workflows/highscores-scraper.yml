@@ -1,4 +1,5 @@
 name: Dura Vault - Highscores Scraper
+run-name: ${{ inputs.server }} - Highscores Scraper
 
 on:
   workflow_dispatch:

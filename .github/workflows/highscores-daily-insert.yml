@@ -1,4 +1,5 @@
 name: Dura Vault - Highscores Daily Insert
+run-name: ${{ inputs.server }} - Highscores Daily Insert
 
 on:
   workflow_dispatch:

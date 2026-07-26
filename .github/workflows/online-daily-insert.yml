@@ -1,4 +1,5 @@
 name: Dura Vault - Online Daily Insert
+run-name: ${{ inputs.server }} - Online Daily Insert
 
 on:
   workflow_dispatch:

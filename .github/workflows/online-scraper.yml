@@ -1,4 +1,5 @@
 name: Dura Vault - Online Scraper
+run-name: ${{ inputs.server }} - Online Scraper
 
 on:
   workflow_dispatch:
