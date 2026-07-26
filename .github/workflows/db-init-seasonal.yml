@@ -1,0 +1,43 @@
+name: Dura Vault - DB Init (Seasonal)
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: db-init-seasonal
+  cancel-in-progress: false
+
+jobs:
+  db-init-seasonal:
+    name: DB Init → Create tables & indexes (Seasonal)
+    runs-on: ubuntu-latest
+    environment: dura-vault-scraper-seasonal
+    timeout-minutes: 5
+
+    env:
+      SERVER: seasonal
+      SEASONAL_PGHOST: ${{ secrets.PGHOST }}
+      SEASONAL_PGUSER: ${{ secrets.PGUSER }}
+      SEASONAL_PGPASSWORD: ${{ secrets.PGPASSWORD }}
+      SEASONAL_PGDATABASE: ${{ secrets.PGDATABASE }}
+      SEASONAL_PGPORT: ${{ secrets.PGPORT }}
+      SEASONAL_DB_SSL: ${{ secrets.DB_SSL }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Initialize database
+        run: node dist/db/init-db.js

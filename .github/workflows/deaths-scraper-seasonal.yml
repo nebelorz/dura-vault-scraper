@@ -1,0 +1,45 @@
+name: Dura Vault - Deaths Scraper (Seasonal)
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deaths-scraper-seasonal
+  cancel-in-progress: false
+
+jobs:
+  deaths-scraper-seasonal:
+    name: Deaths Scrape → deaths (Seasonal)
+    runs-on: ubuntu-latest
+    environment: dura-vault-scraper-seasonal
+    timeout-minutes: 5
+
+    env:
+      SERVER: seasonal
+      SEASONAL_PGHOST: ${{ secrets.PGHOST }}
+      SEASONAL_PGUSER: ${{ secrets.PGUSER }}
+      SEASONAL_PGPASSWORD: ${{ secrets.PGPASSWORD }}
+      SEASONAL_PGDATABASE: ${{ secrets.PGDATABASE }}
+      SEASONAL_PGPORT: ${{ secrets.PGPORT }}
+      SEASONAL_DB_SSL: ${{ secrets.DB_SSL }}
+      SEASONAL_BASE_URL: ${{ vars.BASE_URL }}
+      SEASONAL_SERVER_TIMEZONE: ${{ vars.SERVER_TIMEZONE }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Run deaths scraper
+        run: node dist/deaths/deaths-scraper.js
