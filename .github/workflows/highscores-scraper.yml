@@ -15,14 +15,15 @@ jobs:
     timeout-minutes: 10
 
     env:
-      PGHOST: ${{ secrets.PGHOST }}
-      PGUSER: ${{ secrets.PGUSER }}
-      PGPASSWORD: ${{ secrets.PGPASSWORD }}
-      PGDATABASE: ${{ secrets.PGDATABASE }}
-      PGPORT: ${{ secrets.PGPORT }}
-      DB_SSL: ${{ secrets.DB_SSL }}
-      HIGHSCORES_SCRAPER_BASE_URL: ${{ vars.HIGHSCORES_SCRAPER_BASE_URL }}
-      HIGHSCORES_SCRAPER_PAGES_TO_SCRAP: ${{ vars.HIGHSCORES_SCRAPER_PAGES_TO_SCRAP }}
+      SERVER: classic
+      CLASSIC_PGHOST: ${{ secrets.PGHOST }}
+      CLASSIC_PGUSER: ${{ secrets.PGUSER }}
+      CLASSIC_PGPASSWORD: ${{ secrets.PGPASSWORD }}
+      CLASSIC_PGDATABASE: ${{ secrets.PGDATABASE }}
+      CLASSIC_PGPORT: ${{ secrets.PGPORT }}
+      CLASSIC_DB_SSL: ${{ secrets.DB_SSL }}
+      CLASSIC_BASE_URL: ${{ vars.BASE_URL }}
+      CLASSIC_HIGHSCORES_PAGES: ${{ vars.HIGHSCORES_PAGES }}
 
     steps:
       - name: Checkout repository

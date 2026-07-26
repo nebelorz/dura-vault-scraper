@@ -15,12 +15,13 @@ jobs:
     timeout-minutes: 5
 
     env:
-      PGHOST: ${{ secrets.PGHOST }}
-      PGUSER: ${{ secrets.PGUSER }}
-      PGPASSWORD: ${{ secrets.PGPASSWORD }}
-      PGDATABASE: ${{ secrets.PGDATABASE }}
-      PGPORT: ${{ secrets.PGPORT }}
-      DB_SSL: ${{ secrets.DB_SSL }}
+      SERVER: classic
+      CLASSIC_PGHOST: ${{ secrets.PGHOST }}
+      CLASSIC_PGUSER: ${{ secrets.PGUSER }}
+      CLASSIC_PGPASSWORD: ${{ secrets.PGPASSWORD }}
+      CLASSIC_PGDATABASE: ${{ secrets.PGDATABASE }}
+      CLASSIC_PGPORT: ${{ secrets.PGPORT }}
+      CLASSIC_DB_SSL: ${{ secrets.DB_SSL }}
 
     steps:
       - name: Checkout repository
