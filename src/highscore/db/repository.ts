@@ -3,10 +3,24 @@ import { pool } from '../../db/pool';
 import { logger } from '../../utils/logger';
 import type { HighscoreEntry, HighscoreSection, Section } from '../types';
 
-/**
- * Removes old records from the temp_highscore_snapshots table.
- * Removes records older than 1 day.
- */
+export interface TopEntryDelta {
+  scrape_date: string;
+  section: string;
+  level: number;
+  points: number | null;
+  name: string;
+  vocation: string;
+  rank: number;
+  gain_points: number | null;
+  gain_level: number | null;
+  gain_rank: number | null;
+}
+
+export interface TopEntriesOptions {
+  metric: 'points' | 'level';
+  direction: 'gainers' | 'losers';
+}
+
 export async function removeOldSnapshotsFromTempHighscoreSnapshotTable(): Promise<void> {
   const client = await pool.connect();
   try {
@@ -40,8 +54,8 @@ export async function insertTempHighscoreSnapshots(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const dateStr = scrapeDate.toISOString().split('T')[0];
-    const values: any[] = [];
+    const dateStr = scrapeDate.toISOString().split('T')[0] as string;
+    const values: (string | number | null)[] = [];
     const placeholders: string[] = [];
     let paramIndex = 1;
     for (const entry of entries) {
@@ -90,13 +104,13 @@ export async function insertTempHighscoreSnapshots(
 
 async function insertTopGainersRows(
   client: PoolClient,
-  rows: any[],
+  rows: TopEntryDelta[],
   section: Section,
   todayStr: string,
 ): Promise<void> {
   if (rows.length === 0) return;
 
-  const values: any[] = [];
+  const values: (string | number | null)[] = [];
   const placeholders: string[] = [];
   let paramIndex = 1;
 
@@ -130,88 +144,37 @@ async function insertTopGainersRows(
   await client.query('COMMIT');
 }
 
-export async function insertTopGainers(
-  today: Date,
-  yesterday: Date,
-  numberOfRecords = 100,
-): Promise<void> {
-  const client = await pool.connect();
-  try {
-    const todayStr = today.toISOString().split('T')[0] as string;
-    const yesterdayStr = yesterday.toISOString().split('T')[0] as string;
-
-    const checkQuery =
-      'SELECT 1 FROM temp_highscore_snapshots WHERE scrape_date = $1 AND section = $2 LIMIT 1;';
-    const checkResult = await client.query(checkQuery, [yesterdayStr, 'experience']);
-    if (checkResult.rowCount === 0) {
-      logger.info(
-        `[HIGHSCORE] No data for section 'experience' on previous day (${yesterdayStr}). Skipping top gainers insert for ${todayStr}.`,
-      );
-      return;
-    }
-
-    const query = `
-      SELECT
-        t.scrape_date,
-        t.section,
-        t.level,
-        t.points,
-        t.name,
-        t.vocation,
-        t.rank,
-        (t.points - y.points) AS gain_points,
-        (t.level - y.level) AS gain_level,
-        (y.rank - t.rank) AS gain_rank
-      FROM temp_highscore_snapshots t
-      INNER JOIN temp_highscore_snapshots y
-        ON y.scrape_date = $1
-        AND y.section = t.section
-        AND y.name = t.name
-      WHERE t.scrape_date = $2
-        AND t.section = 'experience'
-        AND (t.points - y.points) > 0
-      ORDER BY gain_points DESC
-      LIMIT ${numberOfRecords};
-    `;
-
-    const result = await client.query(query, [yesterdayStr, todayStr]);
-    const gainsRows = result.rows;
-
-    if (gainsRows.length > 0) {
-      await insertTopGainersRows(client, gainsRows, 'experience', todayStr);
-      logger.info(
-        `[HIGHSCORE] Inserted ${gainsRows.length} top gainers for section 'experience' on ${todayStr}`,
-      );
-    } else {
-      logger.info(`[HIGHSCORE] No top gainers for section 'experience' on ${todayStr}`);
-    }
-  } catch (error) {
-    logger.error("[HIGHSCORE] Error inserting top gainers for section 'experience':", error);
-    throw error;
-  } finally {
-    client.release();
-  }
+function describeTopEntries(options: TopEntriesOptions): string {
+  if (options.direction === 'gainers' && options.metric === 'points') return 'top gainers';
+  if (options.direction === 'gainers' && options.metric === 'level') return 'top skill gainers';
+  return 'experience losses';
 }
 
-export async function insertTopSkillGainers(
+export async function insertTopEntries(
   section: HighscoreSection,
   today: Date,
   yesterday: Date,
+  options: TopEntriesOptions,
   numberOfRecords = 100,
 ): Promise<void> {
-  if (section === 'experience') return;
-
+  const description = describeTopEntries(options);
   const client = await pool.connect();
   try {
     const todayStr = today.toISOString().split('T')[0] as string;
     const yesterdayStr = yesterday.toISOString().split('T')[0] as string;
+
+    const filterExpr = options.metric === 'points' ? '(t.points - y.points)' : '(t.level - y.level)';
+    const filterOp = options.direction === 'gainers' ? '>' : '<';
+    const orderField = options.metric === 'points' ? 'gain_points' : 'gain_level';
+    const orderDir = options.direction === 'gainers' ? 'DESC' : 'ASC';
+    const insertSection: Section = options.direction === 'losers' ? 'experience_loss' : section;
 
     const checkQuery =
       'SELECT 1 FROM temp_highscore_snapshots WHERE scrape_date = $1 AND section = $2 LIMIT 1;';
     const checkResult = await client.query(checkQuery, [yesterdayStr, section]);
     if (checkResult.rowCount === 0) {
-      logger.warn(
-        `[HIGHSCORE] No data for section '${section}' on previous day (${yesterdayStr}). Skipping top skill gainers insert for ${todayStr}.`,
+      logger.info(
+        `[HIGHSCORE] No data for section '${section}' on previous day (${yesterdayStr}). Skipping ${description} insert for ${todayStr}.`,
       );
       return;
     }
@@ -235,93 +198,26 @@ export async function insertTopSkillGainers(
         AND y.name = t.name
       WHERE t.scrape_date = $2
         AND t.section = $3
-        AND (t.level - y.level) > 0
-      ORDER BY gain_level DESC
+        AND ${filterExpr} ${filterOp} 0
+      ORDER BY ${orderField} ${orderDir}
       LIMIT ${numberOfRecords};
     `;
 
     const result = await client.query(query, [yesterdayStr, todayStr, section]);
-    const gainsRows = result.rows;
+    const rows = result.rows as TopEntryDelta[];
 
-    if (gainsRows.length > 0) {
-      await insertTopGainersRows(client, gainsRows, section, todayStr);
+    if (rows.length > 0) {
+      await insertTopGainersRows(client, rows, insertSection, todayStr);
       logger.info(
-        `[HIGHSCORE] Inserted ${gainsRows.length} top skill gainers for section '${section}' on ${todayStr}`,
+        `[HIGHSCORE] Inserted ${rows.length} ${description} for section '${insertSection}' on ${todayStr}`,
       );
     } else {
-      logger.info(`[HIGHSCORE] No top skill gainers for section '${section}' on ${todayStr}`);
+      logger.info(`[HIGHSCORE] No ${description} for section '${insertSection}' on ${todayStr}`);
     }
   } catch (error) {
-    logger.error(`[HIGHSCORE] Error inserting top skill gainers for section '${section}':`, error);
+    logger.error(`[HIGHSCORE] Error inserting ${description} for section '${section}':`, error);
     throw error;
   } finally {
     client.release();
   }
-}
-
-export async function insertExperienceLosses(
-  today: Date,
-  yesterday: Date,
-  numberOfRecords = 100,
-): Promise<void> {
-  const client = await pool.connect();
-  try {
-    const todayStr = today.toISOString().split('T')[0] as string;
-    const yesterdayStr = yesterday.toISOString().split('T')[0] as string;
-
-    const checkQuery =
-      'SELECT 1 FROM temp_highscore_snapshots WHERE scrape_date = $1 AND section = $2 LIMIT 1;';
-    const checkResult = await client.query(checkQuery, [yesterdayStr, 'experience']);
-    if (checkResult.rowCount === 0) {
-      logger.warn(
-        `[HIGHSCORE] No data for section 'experience' on previous day (${yesterdayStr}). Skipping experience losses insert for ${todayStr}.`,
-      );
-      return;
-    }
-
-    const lossesQuery = `
-      SELECT
-        t.scrape_date,
-        t.section,
-        t.level,
-        t.points,
-        t.name,
-        t.vocation,
-        t.rank,
-        (t.points - y.points) AS gain_points,
-        (t.level - y.level) AS gain_level,
-        (y.rank - t.rank) AS gain_rank
-      FROM temp_highscore_snapshots t
-      INNER JOIN temp_highscore_snapshots y
-        ON y.scrape_date = $1
-        AND y.section = t.section
-        AND y.name = t.name
-      WHERE t.scrape_date = $2
-        AND t.section = 'experience'
-        AND (t.points - y.points) < 0
-      ORDER BY gain_points ASC
-      LIMIT ${numberOfRecords};
-    `;
-
-    const result = await client.query(lossesQuery, [yesterdayStr, todayStr]);
-    const lossesRows = result.rows;
-
-    if (lossesRows.length > 0) {
-      await insertTopGainersRows(client, lossesRows, 'experience_loss', todayStr);
-      logger.info(
-        `[HIGHSCORE] Inserted ${lossesRows.length} experience losses in 'experience_loss' section on ${todayStr}`,
-      );
-    } else {
-      logger.info(`[HIGHSCORE] No experience losses on ${todayStr}`);
-    }
-  } catch (error) {
-    logger.error('[HIGHSCORE] Error inserting experience losses:', error);
-    throw error;
-  } finally {
-    client.release();
-  }
-}
-
-export async function closePool(): Promise<void> {
-  await pool.end();
 }

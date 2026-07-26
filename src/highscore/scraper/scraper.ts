@@ -10,7 +10,7 @@ async function scrapeHighscore(
 ): Promise<{ entries: HighscoreEntry[]; logs: string[] }> {
   const allEntries: HighscoreEntry[] = [];
   const logs: string[] = [];
-  const baseUrl = `${config.baseUrl}/${highscoresSection}/`;
+  const baseUrl = `${config.baseUrl}/?highscores/${highscoresSection}/`;
 
   logs.push(
     `[${highscoresSection}] Scraping '${highscoresSection}' highscores (${pagesToScrap} pages)`,
@@ -70,10 +70,12 @@ export async function mainHighscoresScraper() {
   // Abort if any section failed
   const failedSections = results.filter((r) => r.error);
   if (failedSections.length > 0) {
-    logger.error(
-      `\nCritical: Scraping failed for ${failedSections.length} section(s): ${failedSections.map((f) => f.section).join(', ')}`,
+    const errors = failedSections.map((f) => f.error);
+    const sectionNames = failedSections.map((f) => f.section).join(', ');
+    throw new AggregateError(
+      errors,
+      `Failed to scrape ${failedSections.length} section(s): ${sectionNames}`,
     );
-    process.exit(1);
   }
 
   return results;
