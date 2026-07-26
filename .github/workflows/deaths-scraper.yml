@@ -40,4 +40,5 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run build
-      - run: node dist/deaths/deaths-scraper.js
+      - name: Deaths Scrape (${{ inputs.server }})
+        run: node dist/deaths/deaths-scraper.js

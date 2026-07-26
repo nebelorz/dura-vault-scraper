@@ -41,4 +41,5 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run build
-      - run: node dist/highscore/highscores-scraper.js
+      - name: Highscores Scrape (${{ inputs.server }})
+        run: node dist/highscore/highscores-scraper.js
