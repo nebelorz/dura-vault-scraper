@@ -1,5 +1,6 @@
 import { Client } from 'pg';
 import { dbConfig } from './config';
+import { closePool } from './pool';
 import { logger } from '../utils/logger';
 import {
   queryCreateTempHighscoreSnapshotsTable,
@@ -13,10 +14,7 @@ import {
   queryCreateOnlineScraperMetadataTable,
 } from '../online/db/schema';
 import { queryCreateDeathsTable, queryCreateDeathsIndexes } from '../deaths/db/schema';
-import {
-  removeOldSnapshotsFromTempHighscoreSnapshotTable,
-  closePool,
-} from '../highscore/db/repository';
+import { removeOldSnapshotsFromTempHighscoreSnapshotTable } from '../highscore/db/repository';
 
 async function main() {
   const client = new Client(dbConfig);

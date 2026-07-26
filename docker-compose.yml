@@ -5,15 +5,15 @@ services:
     container_name: dura-vault-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${PGDATABASE}
-      POSTGRES_USER: ${PGUSER}
-      POSTGRES_PASSWORD: ${PGPASSWORD}
+      POSTGRES_DB: ${CLASSIC_PGDATABASE}
+      POSTGRES_USER: ${CLASSIC_PGUSER}
+      POSTGRES_PASSWORD: ${CLASSIC_PGPASSWORD}
     ports:
-      - '${PGPORT}:5432'
+      - '${CLASSIC_PGPORT:-5432}:5432'
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${PGUSER}']
+      test: ['CMD-SHELL', 'pg_isready -U ${CLASSIC_PGUSER}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -29,17 +29,16 @@ services:
       db:
         condition: service_healthy
     environment:
-      PGHOST: db
-      PGPORT: 5432
-      PGDATABASE: ${PGDATABASE}
-      PGUSER: ${PGUSER}
-      PGPASSWORD: ${PGPASSWORD}
-      DB_SSL: ${DB_SSL}
-      HIGHSCORES_SCRAPER_BASE_URL: ${HIGHSCORES_SCRAPER_BASE_URL}
-      HIGHSCORES_SCRAPER_PAGES_TO_SCRAP: ${HIGHSCORES_SCRAPER_PAGES_TO_SCRAP}
-      ONLINE_SCRAPER_URL: ${ONLINE_SCRAPER_URL}
-      DEATHS_SCRAPER_URL: ${DEATHS_SCRAPER_URL}
-      DURA_SERVER_TIMEZONE: ${DURA_SERVER_TIMEZONE}
+      SERVER: classic
+      CLASSIC_PGHOST: db
+      CLASSIC_PGPORT: 5432
+      CLASSIC_PGDATABASE: ${CLASSIC_PGDATABASE}
+      CLASSIC_PGUSER: ${CLASSIC_PGUSER}
+      CLASSIC_PGPASSWORD: ${CLASSIC_PGPASSWORD}
+      CLASSIC_DB_SSL: ${CLASSIC_DB_SSL}
+      CLASSIC_BASE_URL: ${CLASSIC_BASE_URL}
+      CLASSIC_HIGHSCORES_PAGES: ${CLASSIC_HIGHSCORES_PAGES}
+      CLASSIC_SERVER_TIMEZONE: ${CLASSIC_SERVER_TIMEZONE}
     command: sh -c "node dist/db/init-db.js && tail -f /dev/null"
     stdin_open: true
     tty: true

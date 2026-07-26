@@ -1,0 +1,54 @@
+name: dura-vault-seasonal
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: dura-vault-seasonal-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${SEASONAL_PGDATABASE}
+      POSTGRES_USER: ${SEASONAL_PGUSER}
+      POSTGRES_PASSWORD: ${SEASONAL_PGPASSWORD}
+    ports:
+      - '${SEASONAL_PGPORT:-5433}:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${SEASONAL_PGUSER}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - network
+
+  scraper:
+    build: .
+    image: dura-vault-scraper
+    container_name: dura-vault-seasonal-scraper
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SERVER: seasonal
+      SEASONAL_PGHOST: db
+      SEASONAL_PGPORT: 5432
+      SEASONAL_PGDATABASE: ${SEASONAL_PGDATABASE}
+      SEASONAL_PGUSER: ${SEASONAL_PGUSER}
+      SEASONAL_PGPASSWORD: ${SEASONAL_PGPASSWORD}
+      SEASONAL_DB_SSL: ${SEASONAL_DB_SSL}
+      SEASONAL_BASE_URL: ${SEASONAL_BASE_URL}
+      SEASONAL_HIGHSCORES_PAGES: ${SEASONAL_HIGHSCORES_PAGES}
+      SEASONAL_SERVER_TIMEZONE: ${SEASONAL_SERVER_TIMEZONE}
+    command: sh -c "node dist/db/init-db.js && tail -f /dev/null"
+    stdin_open: true
+    tty: true
+    networks:
+      - network
+
+volumes:
+  db-data:
+    name: dura-vault-seasonal-db
+
+networks:
+  network:
+    driver: bridge

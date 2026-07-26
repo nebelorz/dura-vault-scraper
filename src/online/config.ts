@@ -1,7 +1,9 @@
-import * as dotenv from 'dotenv';
+import { SERVER_ID, resolveEnv } from '../server';
 
-dotenv.config();
+const baseUrl = resolveEnv(process.env.CLASSIC_BASE_URL, process.env.SEASONAL_BASE_URL);
+const normalizedBaseUrl = baseUrl?.replace(/\/+$/, '');
 
 export const config = {
-  url: process.env.ONLINE_SCRAPER_URL,
+  url: normalizedBaseUrl ? `${normalizedBaseUrl}/?online` : undefined,
+  serverId: SERVER_ID,
 };

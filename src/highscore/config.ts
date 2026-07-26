@@ -1,7 +1,5 @@
-import * as dotenv from 'dotenv';
 import type { HighscoreSection } from './types/section';
-
-dotenv.config();
+import { SERVER_ID, resolveEnv } from '../server';
 
 export const HIGHSCORE_SECTIONS: readonly HighscoreSection[] = [
   'experience',
@@ -16,7 +14,10 @@ export const HIGHSCORE_SECTIONS: readonly HighscoreSection[] = [
 ];
 
 export const config = {
-  baseUrl: process.env.HIGHSCORES_SCRAPER_BASE_URL,
-  scrapNumberOfPages: parseInt(process.env.HIGHSCORES_SCRAPER_PAGES_TO_SCRAP!),
+  baseUrl: resolveEnv(process.env.CLASSIC_BASE_URL, process.env.SEASONAL_BASE_URL)?.replace(/\/+$/, ''),
+  scrapNumberOfPages: parseInt(
+    resolveEnv(process.env.CLASSIC_HIGHSCORES_PAGES, process.env.SEASONAL_HIGHSCORES_PAGES) ?? '10',
+  ),
   sectionsToScrape: HIGHSCORE_SECTIONS,
+  serverId: SERVER_ID,
 };
