@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS deaths (
 	player_level SMALLINT NOT NULL,
 	died_at TIMESTAMPTZ NOT NULL,
 	is_pvp BOOLEAN NOT NULL,
-	scraped_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	scrape_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 	UNIQUE (player_name, died_at)
 );
 `;
