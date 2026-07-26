@@ -1,19 +1,20 @@
-name: dura-vault
+name: ${COMPOSE_PROJECT_NAME:-dura-vault}
+
 services:
   db:
     image: postgres:15-alpine
-    container_name: dura-vault-db
+    container_name: ${COMPOSE_PROJECT_NAME:-dura-vault}-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${CLASSIC_PGDATABASE}
-      POSTGRES_USER: ${CLASSIC_PGUSER}
-      POSTGRES_PASSWORD: ${CLASSIC_PGPASSWORD}
+      POSTGRES_DB: ${PGDATABASE}
+      POSTGRES_USER: ${PGUSER}
+      POSTGRES_PASSWORD: ${PGPASSWORD}
     ports:
-      - '${CLASSIC_PGPORT:-5432}:5432'
+      - '${HOST_PORT:-5432}:5432'
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${CLASSIC_PGUSER}']
+      test: ['CMD-SHELL', 'pg_isready -U ${PGUSER}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,22 +24,22 @@ services:
   scraper:
     build: .
     image: dura-vault-scraper
-    container_name: dura-vault-scraper
+    container_name: ${COMPOSE_PROJECT_NAME:-dura-vault}-scraper
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
-      SERVER: classic
-      CLASSIC_PGHOST: db
-      CLASSIC_PGPORT: 5432
-      CLASSIC_PGDATABASE: ${CLASSIC_PGDATABASE}
-      CLASSIC_PGUSER: ${CLASSIC_PGUSER}
-      CLASSIC_PGPASSWORD: ${CLASSIC_PGPASSWORD}
-      CLASSIC_DB_SSL: ${CLASSIC_DB_SSL}
-      CLASSIC_BASE_URL: ${CLASSIC_BASE_URL}
-      CLASSIC_HIGHSCORES_PAGES: ${CLASSIC_HIGHSCORES_PAGES}
-      CLASSIC_SERVER_TIMEZONE: ${CLASSIC_SERVER_TIMEZONE}
+      SERVER: ${SERVER:-classic}
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: ${PGDATABASE}
+      PGUSER: ${PGUSER}
+      PGPASSWORD: ${PGPASSWORD}
+      DB_SSL: ${DB_SSL}
+      BASE_URL: ${BASE_URL}
+      HIGHSCORES_PAGES: ${HIGHSCORES_PAGES}
+      SERVER_TIMEZONE: ${SERVER_TIMEZONE}
     command: sh -c "node dist/db/init-db.js && tail -f /dev/null"
     stdin_open: true
     tty: true
@@ -47,7 +48,7 @@ services:
 
 volumes:
   db-data:
-    name: dura-vault-db
+    name: ${COMPOSE_PROJECT_NAME:-dura-vault}-db
 
 networks:
   network:

@@ -9,24 +9,27 @@
 Two containers, one network:
 
 ```
-┌─────────────────────────────────────┐
-│         dura-vault-network          │
-│                                     │
-│  ┌──────────────┐  ┌─────────────┐  │
-│  │ dura-vault-db│  │dura-vault-  │  │
-│  │ postgres:15  │◄─│  scraper    │  │
-│  │ port 5432    │  │  node:24    │  │
-│  └──────────────┘  └─────────────┘  │
-└─────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│    ${COMPOSE_PROJECT_NAME:-dura-vault}   │
+│              -network                    │
+│                                          │
+│  ┌──────────────────┐  ┌──────────────┐  │
+│  │ {project}-db     │  │ {project}-   │  │
+│  │  postgres:15     │◄─│  scraper     │  │
+│  │  port 5432       │  │  node:24     │  │
+│  └──────────────────┘  └──────────────┘  │
+└──────────────────────────────────────────┘
         │
         └─► exposed to host at localhost:5432
             (Beekeeper, psql, etc.)
 ```
 
-| Container            | Image                   | Role                                    |
-| -------------------- | ----------------------- | --------------------------------------- |
-| `dura-vault-db`      | `postgres:15-alpine`    | Stores all data persistently            |
-| `dura-vault-scraper` | Built from `Dockerfile` | Runs scrapers on demand; idle otherwise |
+The project name is configured via `COMPOSE_PROJECT_NAME` in your `.env` file (defaults to `dura-vault`). All container names follow the pattern `{project}-db` and `{project}-scraper`.
+
+| Container                            | Image                   | Role                                    |
+| ------------------------------------ | ----------------------- | --------------------------------------- |
+| `{COMPOSE_PROJECT_NAME}-db`      | `postgres:15-alpine`    | Stores all data persistently            |
+| `{COMPOSE_PROJECT_NAME}-scraper` | Built from `Dockerfile` | Runs scrapers on demand; idle otherwise |
 
 On startup the scraper container initialises the DB schema automatically, then stays idle waiting for you to run scripts inside it.
 
@@ -35,7 +38,7 @@ On startup the scraper container initialises the DB schema automatically, then s
 ## Prerequisites
 
 - Docker Desktop running
-- `.env` file in the project root (copy from `.env.example`)
+- `.env` file in `env/classic/` (or `env/seasonal/`) — copy from `env/<server>/.env.example`
 
 ---
 
@@ -44,7 +47,7 @@ On startup the scraper container initialises the DB schema automatically, then s
 ### 1. Start both containers
 
 ```sh
-npm run docker:up
+docker compose --env-file env/classic/.env up --build
 ```
 
 - Builds the scraper image
@@ -55,13 +58,13 @@ npm run docker:up
 Check that both are running:
 
 ```sh
-docker-compose ps
+docker compose ps
 ```
 
 ### 2. Open an interactive shell inside the scraper container
 
 ```sh
-docker exec -it dura-vault-scraper sh
+docker exec -it {COMPOSE_PROJECT_NAME}-scraper sh
 ```
 
 You are now inside the container. Run any scraper script:
@@ -83,33 +86,31 @@ npm run start:online:daily-insert
 npm run start:deaths:scraper
 ```
 
-The scraper writes directly to the `dura-vault-db` container over the shared Docker network. No local PostgreSQL needed.
+The scraper writes directly to the DB container over the shared Docker network. No local PostgreSQL needed.
 
 Exit the container shell with `exit` or `Ctrl+D`. The container keeps running.
 
 ### 3. Stop everything
 
 ```sh
-npm run docker:down
-// OR
-docker-compose down
+docker compose down
 ```
 
 ### 4. Stop and delete all data (drops the volume)
 
 ```sh
-docker-compose down -v
+docker compose down -v
 ```
 
 ### Seasonal server
 
-To run the seasonal server locally, use the seasonal compose file:
+To run the seasonal server, use the same compose file with the seasonal env file:
 
 ```sh
-docker compose -f docker-compose.seasonal.yml up
+docker compose --env-file env/seasonal/.env up --build
 ```
 
-This starts a separate PostgreSQL instance on port 5433 and a scraper container configured for the seasonal server.
+This starts a separate PostgreSQL instance (on a different host port) and a scraper container configured for the seasonal server.
 
 ---
 
@@ -117,10 +118,10 @@ This starts a separate PostgreSQL instance on port 5433 and a scraper container 
 
 ```sh
 # Live logs from the DB container
-docker logs dura-vault-db -f
+docker logs {COMPOSE_PROJECT_NAME}-db -f
 
 # Last 50 lines from the scraper container
-docker logs dura-vault-scraper --tail 50
+docker logs {COMPOSE_PROJECT_NAME}-scraper --tail 50
 ```
 
 ---
@@ -132,33 +133,35 @@ The DB port is exposed to your host machine. Use these settings:
 | Field    | Value                                  |
 | -------- | -------------------------------------- |
 | Host     | `localhost`                            |
-| Port     | value of `CLASSIC_PGPORT` in your `.env` |
-| Database | value of `CLASSIC_PGDATABASE`            |
-| User     | value of `CLASSIC_PGUSER`                |
-| Password | value of `CLASSIC_PGPASSWORD`            |
-| SSL      | value of `CLASSIC_DB_SSL`                |
+| Port     | value of `PGPORT` in your `.env`         |
+| Database | value of `PGDATABASE`                    |
+| User     | value of `PGUSER`                        |
+| Password | value of `PGPASSWORD`                    |
+| SSL      | value of `DB_SSL`                        |
 
 ---
 
 ## Environment Variables
 
-All variables are defined in `.env` (copy from `.env.example`).
+All variables are defined in `env/<server>/.env` (copy from `env/<server>/.env.example`).
 
 | Variable | Used by | Notes |
-|---|---|---|---|
+|---|---|---|
 | `SERVER` | scraper | `classic` or `seasonal` — selects which server config to use |
-| `CLASSIC_PGHOST` | scraper → db | Set to `db` automatically by compose; override only for local runs |
-| `CLASSIC_PGPORT` | both | Port for the PostgreSQL server |
-| `CLASSIC_PGDATABASE` | both | DB name |
-| `CLASSIC_PGUSER` | both | DB user |
-| `CLASSIC_PGPASSWORD` | both | DB password |
-| `CLASSIC_DB_SSL` | scraper | `false`. Set `true` only for cloud DBs with SSL |
-| `CLASSIC_BASE_URL` | scraper | Base URL for all scraper endpoints |
-| `CLASSIC_HIGHSCORES_PAGES` | scraper | Number of highscore pages to scrape |
-| `CLASSIC_SERVER_TIMEZONE` | scraper | Server timezone for death timestamps |
+| `COMPOSE_PROJECT_NAME` | compose | Project name for container naming (default: `dura-vault`) |
+| `HOST_PORT` | compose | Host port mapped to the DB container (default: `5432`) |
+| `PGHOST` | scraper → db | Set to `db` automatically by compose; override only for local runs |
+| `PGPORT` | both | Port for the PostgreSQL server |
+| `PGDATABASE` | both | DB name |
+| `PGUSER` | both | DB user |
+| `PGPASSWORD` | both | DB password |
+| `DB_SSL` | scraper | `false`. Set `true` only for cloud DBs with SSL |
+| `BASE_URL` | scraper | Base URL for all scraper endpoints |
+| `HIGHSCORES_PAGES` | scraper | Number of highscore pages to scrape |
+| `SERVER_TIMEZONE` | scraper | Server timezone for death timestamps |
 | `ENABLE_DEBUG` | scraper | Set `true` to enable verbose debug logs |
 
-> For seasonal server, prefix all variables with `SEASONAL_` instead of `CLASSIC_`. Use `docker-compose.seasonal.yml` for seasonal Docker deployments.
+Each server gets its own env file (`env/classic/.env` for classic, `env/seasonal/.env` for seasonal).
 
 ---
 
@@ -166,19 +169,19 @@ All variables are defined in `.env` (copy from `.env.example`).
 
 ```sh
 # Rebuild the scraper image after code changes
-docker-compose up --build -d
+docker compose --env-file env/classic/.env up --build -d
 
 # Open a shell in the scraper container
-docker exec -it dura-vault-scraper sh
+docker exec -it {COMPOSE_PROJECT_NAME}-scraper sh
 
 # Open a psql console in the DB container
-docker exec -it dura-vault-db psql -U $PGUSER -d $PGDATABASE
+docker exec -it {COMPOSE_PROJECT_NAME}-db psql -U $PGUSER -d $PGDATABASE
 
 # List running containers
-docker-compose ps
+docker compose ps
 
 # Remove stopped containers and dangling images
-docker-compose down
+docker compose down
 docker image prune -f
 ```
 

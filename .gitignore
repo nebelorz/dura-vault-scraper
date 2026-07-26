@@ -7,8 +7,8 @@ build/
 
 # Environment variables
 .env
-.env.local
-.env.*.local
+env/*/.env
+env/*/.env.local
 
 # Logs
 *.log
@@ -35,6 +35,11 @@ Thumbs.db
 # Testing
 coverage/
 .nyc_output/
+
+# opencode
+.opencode/
+openspec/
+skills-lock.json
 
 # Misc
 .cache/

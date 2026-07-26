@@ -2,43 +2,42 @@ name: Dura Vault - Online Scraper
 
 on:
   workflow_dispatch:
+    inputs:
+      server:
+        description: 'Server to scrape'
+        type: choice
+        options: [classic, seasonal]
+        default: classic
 
 concurrency:
-  group: online-scraper
+  group: online-scraper-${{ inputs.server }}
   cancel-in-progress: false
 
 jobs:
-  online-scraper:
-    name: Online Players Scrape → temp_online_snapshots
+  scrape:
+    if: inputs.server != 'seasonal' || vars.SEASONAL_ENABLED == 'true'
+    name: Online Scrape → temp_online_snapshots
     runs-on: ubuntu-latest
-    environment: dura-vault-scraper
+    environment: ${{ inputs.server }}
     timeout-minutes: 5
 
     env:
-      SERVER: classic
-      CLASSIC_PGHOST: ${{ secrets.PGHOST }}
-      CLASSIC_PGUSER: ${{ secrets.PGUSER }}
-      CLASSIC_PGPASSWORD: ${{ secrets.PGPASSWORD }}
-      CLASSIC_PGDATABASE: ${{ secrets.PGDATABASE }}
-      CLASSIC_PGPORT: ${{ secrets.PGPORT }}
-      CLASSIC_DB_SSL: ${{ secrets.DB_SSL }}
-      CLASSIC_BASE_URL: ${{ vars.BASE_URL }}
+      SERVER: ${{ inputs.server }}
+      PGHOST: ${{ secrets.PGHOST }}
+      PGUSER: ${{ secrets.PGUSER }}
+      PGPASSWORD: ${{ secrets.PGPASSWORD }}
+      PGDATABASE: ${{ secrets.PGDATABASE }}
+      PGPORT: ${{ secrets.PGPORT }}
+      DB_SSL: ${{ secrets.DB_SSL }}
+      BASE_URL: ${{ vars.BASE_URL }}
+      SERVER_TIMEZONE: ${{ vars.SERVER_TIMEZONE }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build TypeScript
-        run: npm run build
-
-      - name: Run online scraper
-        run: node dist/online/online-scraper.js
+      - run: npm ci
+      - run: npm run build
+      - run: node dist/online/online-scraper.js

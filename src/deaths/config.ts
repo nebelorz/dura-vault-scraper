@@ -1,12 +1,8 @@
-import { SERVER_ID, resolveEnv } from '../server';
-
-const baseUrl = resolveEnv(process.env.CLASSIC_BASE_URL, process.env.SEASONAL_BASE_URL);
-const normalizedBaseUrl = baseUrl?.replace(/\/+$/, '');
+import { SERVER_ID } from '../server';
+import { ENV } from '../env';
 
 export const config = {
-  url: normalizedBaseUrl ? `${normalizedBaseUrl}/?deaths` : undefined,
-  serverTimezone:
-    resolveEnv(process.env.CLASSIC_SERVER_TIMEZONE, process.env.SEASONAL_SERVER_TIMEZONE) ??
-    'America/New_York',
+  url: `${ENV.baseUrl}/?deaths`,
+  serverTimezone: ENV.serverTimezone,
   serverId: SERVER_ID,
 };

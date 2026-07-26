@@ -135,7 +135,7 @@ src/online/online-daily-insert.ts (entrypoint)
 | first_seen_at | TIMESTAMPTZ | UTC timestamp of first online detection |
 | last_seen_at  | TIMESTAMPTZ | UTC timestamp of last online detection  |
 
-**UNIQUE:** (scrape_date, name)
+**UNIQUE:** (name)
 
 ### online_top
 
@@ -180,26 +180,36 @@ Used to calculate the real delta between scraper executions.
 
 #### 1. Configure environment
 
-Copy `.env.example` to `.env` and fill in your values:
+Copy the appropriate `.env.example` to `.env`:
 
-```env
-CLASSIC_BASE_URL=https://example.com
-CLASSIC_HIGHSCORES_PAGES=5
-CLASSIC_SERVER_TIMEZONE=America/New_York
-CLASSIC_PGUSER=youruser
-CLASSIC_PGPASSWORD=yourpassword
-CLASSIC_PGDATABASE=yourdb
-CLASSIC_PGPORT=5432
-CLASSIC_DB_SSL=false
+```sh
+cp env/classic/.env.example env/classic/.env    # Classic server
+# or
+cp env/seasonal/.env.example env/seasonal/.env  # Seasonal server
 ```
 
-> `CLASSIC_PGHOST` is **not** needed in `.env` for Docker — it is automatically set to `db` (the internal container hostname) by `docker-compose.yml`.
+Then edit `env/<server>/.env` and fill in your values:
+
+```env
+BASE_URL=https://example.com
+HIGHSCORES_PAGES=5
+SERVER_TIMEZONE=America/New_York
+PGUSER=youruser
+PGPASSWORD=yourpassword
+PGDATABASE=yourdb
+PGPORT=5432
+DB_SSL=false
+```
+
+> `PGHOST` is **not** needed in `env/classic/.env` for Docker — the `docker-compose.yml` automatically sets it to `db` (the internal container hostname) for the scraper service.
 
 #### 2. Start containers (builds image + initialises DB schema automatically)
 
 ```sh
-npm run docker:up
+docker compose --env-file env/classic/.env up --build
 ```
+
+For the seasonal server, replace `env/classic/.env` with `env/seasonal/.env`.
 
 #### 3. Run scrapers inside the container
 
@@ -240,18 +250,18 @@ npm ci
 
 #### 2. Configure environment
 
-Create a `.env` file in the project root:
+Create a `.env` file in `env/classic/` (or `env/seasonal/`):
 
 ```env
-CLASSIC_BASE_URL=https://example.com
-CLASSIC_HIGHSCORES_PAGES=5
-CLASSIC_SERVER_TIMEZONE=America/New_York
-CLASSIC_PGHOST=localhost
-CLASSIC_PGUSER=youruser
-CLASSIC_PGPASSWORD=yourpassword
-CLASSIC_PGDATABASE=yourdb
-CLASSIC_PGPORT=5432
-CLASSIC_DB_SSL=false
+BASE_URL=https://example.com
+HIGHSCORES_PAGES=5
+SERVER_TIMEZONE=America/New_York
+PGHOST=localhost
+PGUSER=youruser
+PGPASSWORD=yourpassword
+PGDATABASE=yourdb
+PGPORT=5432
+DB_SSL=false
 ```
 
 #### 3. Start the database (Docker)
@@ -327,11 +337,9 @@ npm run start:deaths:scraper
 | src/utils/                                    | Shared utilities (fetch-html, logger)    |
 | .github/workflows/online-scraper.yml          | Online scraper workflow (every 15 min)   |
 | .github/workflows/highscores-scraper.yml      | Highscores scraper workflow (daily)      |
-| .github/workflows/db-init.yml                 | DB initialization workflow (on demand)   |
 | .github/workflows/highscores-daily-insert.yml | Highscores daily insert workflow (EOD)   |
 | .github/workflows/online-daily-insert.yml     | Online daily insert workflow (EOD)       |
 | .github/workflows/deaths-scraper.yml          | Deaths scraper workflow (every 15 min)   |
-| docker-compose.seasonal.yml                   | Seasonal server Docker Compose config    |
 
 ---
 
@@ -450,11 +458,9 @@ GitHub Actions for this project are managed externally via [cron-job.org](https:
 | ----------------------- | ----------------------------- | ------------------------------------- | ----------------------------------------------- |
 | Online Scraper          | `online-scraper.yml`          | Every 15 min                          | Scrape online players → `temp_online_snapshots` |
 | Highscores Scraper      | `highscores-scraper.yml`      | Once daily                            | Scrape highscores → `temp_highscore_snapshots`  |
-| DB Init                 | `db-init.yml`                 | On demand (first deploy / migrations) | Create tables & indexes                         |
 | Highscores Daily Insert | `highscores-daily-insert.yml` | Once daily (EOD)                      | temp_highscore_snapshots → highscore_top        |
 | Online Daily Insert     | `online-daily-insert.yml`     | Once daily (EOD)                      | temp_online_snapshots → online_top + truncate   |
 
-> **First deployment:** trigger `db-init` manually once to create all tables and indexes.
 
 - **Check cron job status:** [https://2cdd12ry.status.cron-job.org/](https://2cdd12ry.status.cron-job.org/)
 

@@ -5,7 +5,7 @@ import { parseDeaths } from './parse';
 import type { DeathEntry } from '../types';
 
 async function scrapeDeaths(): Promise<DeathEntry[]> {
-  if (!config.url) throw new Error('[DEATHS] DEATHS_SCRAPER_URL is not defined');
+  if (!config.url) throw new Error('[DEATHS] BASE_URL is not defined');
 
   const html = await fetchHTML(config.url);
   const entries = parseDeaths(html);
