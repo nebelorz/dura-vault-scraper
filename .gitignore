@@ -38,6 +38,7 @@ coverage/
 
 # opencode
 .opencode/
+opencode.json
 openspec/
 skills-lock.json
 

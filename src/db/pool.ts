@@ -4,6 +4,10 @@ import { logger } from '../utils/logger';
 
 export const pool = new Pool(dbConfig);
 
+pool.on('connect', (client) => {
+  client.query('SET search_path TO data');
+});
+
 pool.on('error', (err) => {
   logger.error('Unexpected error on idle client:', err);
   process.exit(1);
