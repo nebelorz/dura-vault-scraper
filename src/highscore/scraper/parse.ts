@@ -57,6 +57,10 @@ function detectColumnIndices(
 }
 
 // Row parser
+export function isEmptyPage(html: string): boolean {
+  return html.includes('No records yet.');
+}
+
 export function parseHighscore(html: string, section?: string): HighscoreEntry[] {
   const $ = cheerio.load(html);
   const entries: HighscoreEntry[] = [];
