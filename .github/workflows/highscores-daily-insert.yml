@@ -31,6 +31,7 @@ jobs:
       PGPORT: ${{ secrets.PGPORT }}
       DB_SSL: ${{ secrets.DB_SSL }}
       BASE_URL: ${{ vars.BASE_URL }}
+      HIGHSCORES_TOP_RECORDS: ${{ vars.HIGHSCORES_TOP_RECORDS }}
       SERVER_TIMEZONE: ${{ vars.SERVER_TIMEZONE }}
 
     steps:
