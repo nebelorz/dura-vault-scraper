@@ -71,20 +71,22 @@ You are now inside the container. Run any scraper script:
 
 ```sh
 # Highscores scraper — scrape + write to temp_highscore_snapshots (daily)
-npm run start:highscores:scraper
+npm run start:highscores:scraper:classic
 
 # Highscores daily insert — temp → production tables (daily EOD)
-npm run start:highscores:daily-insert
+npm run start:highscores:daily-insert:classic
 
 # Online scraper — scrape + write to temp_online_snapshots (every 15 min)
-npm run start:online:scraper
+npm run start:online:scraper:classic
 
 # Online daily insert — temp → production tables + truncate (daily EOD)
-npm run start:online:daily-insert
+npm run start:online:daily-insert:classic
 
 # Deaths scraper — scrape + write directly to deaths table (every X mins, depends on server player volume)
-npm run start:deaths:scraper
+npm run start:deaths:scraper:classic
 ```
+
+For the seasonal server, replace `classic` with `seasonal` in each command above.
 
 The scraper writes directly to the DB container over the shared Docker network. No local PostgreSQL needed.
 
