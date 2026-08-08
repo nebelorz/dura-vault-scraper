@@ -1,5 +1,6 @@
 import { pool } from '../../db/pool';
 import { logger } from '../../utils/logger';
+import { ENV } from '../../env';
 import type { OnlineEntry } from '../types';
 
 const MAX_TICK_MINUTES = 60;
@@ -96,7 +97,7 @@ export async function insertOnlineTop(scrapeDate: Date = new Date()): Promise<vo
       SELECT $1::date, name, level, vocation, online_time, first_seen_at, last_seen_at
       FROM temp_online_snapshots
       ORDER BY online_time DESC
-      LIMIT 100
+      LIMIT ${ENV.onlineTopRecords}
       ON CONFLICT (scrape_date, name) DO NOTHING
     `;
 

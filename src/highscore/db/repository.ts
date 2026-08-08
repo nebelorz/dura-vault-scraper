@@ -1,6 +1,7 @@
 import { PoolClient } from 'pg';
 import { pool } from '../../db/pool';
 import { logger } from '../../utils/logger';
+import { ENV } from '../../env';
 import type { HighscoreEntry, HighscoreSection, Section } from '../types';
 
 export interface TopEntryDelta {
@@ -155,7 +156,7 @@ export async function insertTopEntries(
   today: Date,
   yesterday: Date,
   options: TopEntriesOptions,
-  numberOfRecords = 100,
+  numberOfRecords = ENV.highscoresTopRecords,
 ): Promise<void> {
   const description = describeTopEntries(options);
   const client = await pool.connect();

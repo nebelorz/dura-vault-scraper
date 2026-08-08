@@ -21,6 +21,8 @@ async function main() {
   try {
     logger.section('Initializing database...');
     await client.connect();
+    await client.query('CREATE SCHEMA IF NOT EXISTS data');
+    logger.info('[DB] Schema "data" ensured');
     await client.query('SET search_path TO data');
     logger.info(
       `Connected to PostgreSQL (${dbConfig.host}:${dbConfig.port}) - (${dbConfig.database})`,

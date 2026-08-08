@@ -1,6 +1,6 @@
 import { config } from '../config';
 import { fetchHTML } from '../../utils/fetch-html';
-import { parseHighscore } from './parse';
+import { parseHighscore, isEmptyPage } from './parse';
 import { logger } from '../../utils/logger';
 import type { HighscoreEntry, HighscoreSection } from '../types';
 
@@ -21,7 +21,16 @@ async function scrapeHighscore(
     const url = `${baseUrl}${page}`;
     try {
       const html = await fetchHTML(url);
+      if (isEmptyPage(html)) {
+        logs.push(`[${highscoresSection}] Page ${page}: empty page detected, stopping`);
+        break;
+      }
       const entries = parseHighscore(html, highscoresSection);
+      if (entries.length === 0) {
+        throw new Error(
+          `[${highscoresSection}] Page ${page}: non-empty page returned 0 entries`,
+        );
+      }
       allEntries.push(...entries);
       logs.push(
         `[${highscoresSection}] Page ${page}/${pagesToScrap - 1} OK: ${entries.length} records`,

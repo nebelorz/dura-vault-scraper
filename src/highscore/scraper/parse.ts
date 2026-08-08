@@ -57,6 +57,10 @@ function detectColumnIndices(
 }
 
 // Row parser
+export function isEmptyPage(html: string): boolean {
+  return html.includes('No records yet.');
+}
+
 export function parseHighscore(html: string, section?: string): HighscoreEntry[] {
   const $ = cheerio.load(html);
   const entries: HighscoreEntry[] = [];
@@ -93,7 +97,7 @@ export function parseHighscore(html: string, section?: string): HighscoreEntry[]
       ? skillValueEl.attr('data-dura-value')!
       : levelCell.text().replace(/\D/g, '');
     const level = parseInt(levelText, 10);
-    if (isNaN(level) || level <= 0) return;
+    if (isNaN(level)) return;
 
     // Points are only available for experience section
     let points: number | null = null;

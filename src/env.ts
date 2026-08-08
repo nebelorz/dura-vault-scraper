@@ -1,3 +1,5 @@
+import './server';
+
 function envRequired(name: string): string {
   const value = process.env[name];
   if (value === undefined || value === '') {
@@ -34,7 +36,16 @@ export const ENV = {
   pgPort: envInt('PGPORT', 5432),
   dbSsl: envBool('DB_SSL'),
   highscoresPages: envInt('HIGHSCORES_PAGES', 10),
+  highscoresTopRecords: envInt('HIGHSCORES_TOP_RECORDS', 100),
+  onlineTopRecords: envInt('ONLINE_TOP_RECORDS', 100),
   serverTimezone: envRequired('SERVER_TIMEZONE'),
 } as const;
+
+if (ENV.highscoresTopRecords < 1) {
+  throw new Error(`HIGHSCORES_TOP_RECORDS must be >= 1, got: ${ENV.highscoresTopRecords}`);
+}
+if (ENV.onlineTopRecords < 1) {
+  throw new Error(`ONLINE_TOP_RECORDS must be >= 1, got: ${ENV.onlineTopRecords}`);
+}
 
 export { envInt, envBool };
